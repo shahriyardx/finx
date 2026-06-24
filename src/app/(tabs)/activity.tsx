@@ -43,6 +43,7 @@ export default function ActivityScreen() {
         amount: transactions.amount,
         category: transactions.category,
         note: transactions.note,
+        receipt: transactions.receipt,
         date: transactions.date,
         walletName: wallets.name,
       })
@@ -131,7 +132,14 @@ export default function ActivityScreen() {
           ) : (
             <ThemedView type="backgroundElement" style={styles.card}>
               {rows.map((t) => (
-                <Pressable key={t.id} onLongPress={() => confirmDelete(t.id)}>
+                <Pressable
+                  key={t.id}
+                  onLongPress={() => confirmDelete(t.id)}
+                  onPress={
+                    t.receipt
+                      ? () => router.push(`/modals/receipt?uri=${encodeURIComponent(t.receipt!)}`)
+                      : undefined
+                  }>
                   <TransactionRow
                     type={t.type}
                     amount={t.amount}
@@ -139,6 +147,7 @@ export default function ActivityScreen() {
                     note={t.note}
                     date={t.date}
                     subtitle={t.walletName ?? undefined}
+                    hasReceipt={!!t.receipt}
                   />
                 </Pressable>
               ))}

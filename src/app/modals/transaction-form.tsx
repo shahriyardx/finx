@@ -14,7 +14,7 @@ import { wallets } from '@/db/schema';
 import { useTheme } from '@/hooks/use-theme';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/categories';
 import { parseMoney } from '@/lib/format';
-import { captureReceiptPhoto, pickReceiptFromLibrary } from '@/lib/receipt';
+import { captureReceiptPhoto, pickReceiptFromLibrary, resolveReceipt } from '@/lib/receipt';
 
 type Type = 'income' | 'expense';
 
@@ -170,7 +170,7 @@ export default function TransactionForm() {
         </ThemedText>
         {receipt ? (
           <View style={styles.receiptRow}>
-            <Image source={{ uri: receipt }} style={styles.receiptThumb} contentFit="cover" />
+            <Image source={{ uri: resolveReceipt(receipt) }} style={styles.receiptThumb} contentFit="cover" />
             <Pressable onPress={() => setReceipt(null)} hitSlop={8} style={styles.receiptRemove}>
               <MaterialCommunityIcons name="trash-can-outline" size={18} color={theme.expense} />
               <ThemedText type="small" style={{ color: theme.expense, fontWeight: '600' }}>

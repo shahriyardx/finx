@@ -6,13 +6,24 @@ import * as ImagePicker from 'expo-image-picker';
  * into document storage. Returns the saved file uri, or null if cancelled/denied.
  * Unlike avatars, receipts keep their original aspect ratio.
  */
+/**
+ * Resolve a stored receipt value to a loadable uri. New receipts are stored as
+ * a path RELATIVE to the document directory (e.g. `receipts/123.jpg`) because
+ * the absolute document-directory prefix is not stable across installs / Expo
+ * Go sessions. Legacy absolute values (file:// or /...) are returned unchanged.
+ */
+export function resolveReceipt(stored: string): string {
+  if (stored.startsWith('file://') || stored.startsWith('/')) return stored;
+  return `${FileSystem.documentDirectory}${stored}`;
+}
+
 async function persist(asset: ImagePicker.ImagePickerAsset): Promise<string> {
   const dir = `${FileSystem.documentDirectory}receipts/`;
   await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
   const ext = asset.uri.split('.').pop()?.split('?')[0] || 'jpg';
-  const dest = `${dir}${Date.now()}.${ext}`;
-  await FileSystem.copyAsync({ from: asset.uri, to: dest });
-  return dest;
+  const rel = `receipts/${Date.now()}.${ext}`;
+  await FileSystem.copyAsync({ from: asset.uri, to: `${FileSystem.documentDirectory}${rel}` });
+  return rel; // store relative; resolve with resolveReceipt() when loading
 }
 
 export async function pickReceiptFromLibrary(): Promise<string | null> {

@@ -117,6 +117,12 @@ export default function Dashboard() {
                   category={t.category}
                   note={t.note}
                   date={t.date}
+                  hasReceipt={!!t.receipt}
+                  onPress={
+                    t.receipt
+                      ? () => router.push(`/modals/receipt?uri=${encodeURIComponent(t.receipt!)}`)
+                      : undefined
+                  }
                 />
               ))}
             </ThemedView>
