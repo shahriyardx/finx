@@ -1,8 +1,11 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -34,6 +37,11 @@ export default function WalletFormScreen() {
   const [smsSender, setSmsSender] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  // Live value while dragging in the picker; committed to `color` on Done.
+  const [draftColor, setDraftColor] = useState<string>(color);
+
+  const isCustom = !WALLET_COLORS.includes(color);
 
   useEffect(() => {
     if (editId && !loaded && data?.[0]) {
@@ -97,6 +105,23 @@ export default function WalletFormScreen() {
           Color
         </ThemedText>
         <View style={styles.colors}>
+          {/* Rainbow disk → custom color picker */}
+          <Pressable
+            onPress={() => {
+              setDraftColor(color);
+              setPickerOpen(true);
+            }}
+            style={[
+              styles.swatch,
+              styles.disk,
+              isCustom && { backgroundColor: color, borderColor: theme.text, borderWidth: 3 },
+            ]}>
+            <MaterialCommunityIcons
+              name="palette"
+              size={22}
+              color={isCustom ? '#ffffff' : theme.text}
+            />
+          </Pressable>
           {WALLET_COLORS.map((c) => (
             <Pressable
               key={c}
@@ -109,6 +134,38 @@ export default function WalletFormScreen() {
             />
           ))}
         </View>
+
+        <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
+          <Pressable style={styles.pickerBackdrop} onPress={() => setPickerOpen(false)}>
+            <GestureHandlerRootView style={styles.pickerWrap}>
+            <Pressable style={[styles.pickerCard, { backgroundColor: theme.background }]} onPress={() => {}}>
+              <ColorPicker
+                value={draftColor}
+                style={styles.picker}
+                onComplete={({ hex }) => setDraftColor(hex)}>
+                <Preview hideInitialColor style={styles.pickerRow} />
+                <Panel1 style={styles.pickerPanel} />
+                <HueSlider style={styles.pickerRow} />
+              </ColorPicker>
+              <View style={styles.pickerActions}>
+                <Pressable onPress={() => setPickerOpen(false)} style={styles.pickerBtn}>
+                  <ThemedText themeColor="textSecondary" style={{ fontWeight: '600' }}>
+                    Cancel
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setColor(draftColor);
+                    setPickerOpen(false);
+                  }}
+                  style={[styles.pickerBtn, { backgroundColor: theme.accent, borderRadius: Spacing.three }]}>
+                  <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Use color</ThemedText>
+                </Pressable>
+              </View>
+            </Pressable>
+          </GestureHandlerRootView>
+          </Pressable>
+        </Modal>
 
         <ThemedText type="small" themeColor="textSecondary">
           Icon
@@ -170,6 +227,21 @@ const styles = StyleSheet.create({
   input: { borderRadius: Spacing.three, padding: Spacing.three, fontSize: 16, marginBottom: Spacing.two },
   colors: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
   swatch: { width: 40, height: 40, borderRadius: 20 },
+  disk: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#9333EA',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  pickerBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: Spacing.four },
+  pickerWrap: { width: '100%' },
+  pickerCard: { borderRadius: Spacing.four, padding: Spacing.four, gap: Spacing.three },
+  picker: { gap: Spacing.three },
+  pickerRow: { borderRadius: Spacing.two, height: 28 },
+  pickerPanel: { borderRadius: Spacing.two, height: 200 },
+  pickerActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.two, marginTop: Spacing.two },
+  pickerBtn: { paddingHorizontal: Spacing.four, paddingVertical: Spacing.three, alignItems: 'center', justifyContent: 'center' },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
   iconWrap: { borderRadius: 18, borderWidth: 3, borderColor: 'transparent', padding: 2 },
   hint: { marginBottom: Spacing.one },
