@@ -19,8 +19,8 @@ export const BANKS: Bank[] = [
   {
     id: 'citybank',
     label: 'CITY BANK',
-    // Real sender "CITY BANK" normalizes to CITYBANK; "CITY" kept for emulator tests.
-    senderAliases: ['CITYBANK', 'CITY'],
+    // Real sender "CITY BANK" normalizes to CITYBANK.
+    senderAliases: ['CITYBANK'],
     parse: parseCityBankSms,
     supported: true,
   },
