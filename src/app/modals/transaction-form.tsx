@@ -1,16 +1,18 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Image } from 'expo-image';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
+import { useConfirm } from '@/components/confirm-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { db } from '@/db/client';
-import { addTransaction } from '@/db/repo';
-import { wallets } from '@/db/schema';
+import { addTransaction, deleteTransaction, updateTransaction } from '@/db/repo';
+import { transactions, wallets } from '@/db/schema';
 import { useTheme } from '@/hooks/use-theme';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/categories';
 import { parseMoney } from '@/lib/format';
@@ -21,9 +23,19 @@ type Type = 'income' | 'expense';
 export default function TransactionForm() {
   const theme = useTheme();
   const router = useRouter();
-  const params = useLocalSearchParams<{ walletId?: string }>();
+  const navigation = useNavigation();
+  const confirm = useConfirm();
+  const params = useLocalSearchParams<{ walletId?: string; id?: string }>();
+  const editId = params.id ? Number(params.id) : null;
   const { data: walletRows } = useLiveQuery(db.select().from(wallets));
   const list = walletRows ?? [];
+
+  // When editing, load the existing row once and prefill the form from it.
+  const { data: editRows } = useLiveQuery(
+    db.select().from(transactions).where(eq(transactions.id, editId ?? -1)),
+    [editId],
+  );
+  const existing = editId !== null ? editRows?.[0] : undefined;
 
   const [type, setType] = useState<Type>('expense');
   const [amount, setAmount] = useState('');
@@ -35,6 +47,24 @@ export default function TransactionForm() {
   const [receipt, setReceipt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Prefill from the loaded row exactly once (avoid clobbering user edits).
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (existing && !prefilled.current) {
+      prefilled.current = true;
+      setType(existing.type);
+      setAmount((existing.amount / 100).toFixed(2));
+      setWalletId(existing.walletId);
+      setCategory(existing.category);
+      setNote(existing.note ?? '');
+      setReceipt(existing.receipt ?? null);
+    }
+  }, [existing]);
+
+  useEffect(() => {
+    navigation.setOptions({ title: editId !== null ? 'Edit transaction' : 'New transaction' });
+  }, [navigation, editId]);
+
   const effectiveWallet = walletId ?? list[0]?.id ?? null;
   const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const minor = useMemo(() => parseMoney(amount), [amount]);
@@ -43,15 +73,34 @@ export default function TransactionForm() {
   const save = async () => {
     if (!canSave || effectiveWallet === null) return;
     setSaving(true);
-    await addTransaction({
-      walletId: effectiveWallet,
-      type,
-      amount: minor,
-      category,
-      note: note.trim() || undefined,
-      receipt,
-    });
+    if (editId !== null) {
+      await updateTransaction(editId, {
+        walletId: effectiveWallet,
+        type,
+        amount: minor,
+        category,
+        note: note.trim() || null,
+        receipt,
+      });
+    } else {
+      await addTransaction({
+        walletId: effectiveWallet,
+        type,
+        amount: minor,
+        category,
+        note: note.trim() || undefined,
+        receipt,
+      });
+    }
     router.back();
+  };
+
+  const remove = async () => {
+    if (editId === null) return;
+    if (await confirm({ title: 'Delete transaction', message: 'This reverses its effect on the wallet balance.' })) {
+      await deleteTransaction(editId);
+      router.back();
+    }
   };
 
   const addReceipt = async (from: 'camera' | 'library') => {
@@ -170,7 +219,9 @@ export default function TransactionForm() {
         </ThemedText>
         {receipt ? (
           <View style={styles.receiptRow}>
-            <Image source={{ uri: resolveReceipt(receipt) }} style={styles.receiptThumb} contentFit="cover" />
+            <Pressable onPress={() => router.push(`/modals/receipt?uri=${encodeURIComponent(receipt)}`)}>
+              <Image source={{ uri: resolveReceipt(receipt) }} style={styles.receiptThumb} contentFit="cover" />
+            </Pressable>
             <Pressable onPress={() => setReceipt(null)} hitSlop={8} style={styles.receiptRemove}>
               <MaterialCommunityIcons name="trash-can-outline" size={18} color={theme.expense} />
               <ThemedText type="small" style={{ color: theme.expense, fontWeight: '600' }}>
@@ -205,6 +256,15 @@ export default function TransactionForm() {
           style={[styles.save, { backgroundColor: theme.accent, opacity: canSave ? 1 : 0.5 }]}>
           <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Save</ThemedText>
         </Pressable>
+
+        {editId !== null ? (
+          <Pressable onPress={remove} style={styles.delete}>
+            <MaterialCommunityIcons name="trash-can-outline" size={18} color={theme.expense} />
+            <ThemedText type="small" style={{ color: theme.expense, fontWeight: '600' }}>
+              Delete transaction
+            </ThemedText>
+          </Pressable>
+        ) : null}
       </ScrollView>
     </ThemedView>
   );
@@ -233,4 +293,12 @@ const styles = StyleSheet.create({
   },
   receiptThumb: { width: 64, height: 64, borderRadius: Spacing.two },
   receiptRemove: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
+  delete: {
+    marginTop: Spacing.three,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+  },
 });

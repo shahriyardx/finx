@@ -89,6 +89,61 @@ export async function addTransaction(input: {
   });
 }
 
+/**
+ * Edit an existing transaction. Reverses the old wallet effect and applies the
+ * new one atomically, so changing the amount, type, or wallet keeps every
+ * balance correct. Any field left undefined is preserved.
+ */
+export async function updateTransaction(
+  id: number,
+  input: {
+    walletId?: number;
+    type?: 'income' | 'expense';
+    amount?: number; // positive minor units
+    category?: string;
+    note?: string | null;
+    receipt?: string | null;
+    date?: number;
+  },
+) {
+  await db.transaction(async (tx) => {
+    const [old] = await tx.select().from(transactions).where(eq(transactions.id, id));
+    if (!old) throw new Error('transaction not found');
+
+    const next = {
+      walletId: input.walletId ?? old.walletId,
+      type: input.type ?? old.type,
+      amount: input.amount ?? old.amount,
+    };
+
+    // Reverse the old row's effect on its wallet, then apply the new one. Done
+    // as two updates so a wallet change moves money off one and onto the other.
+    const oldDelta = old.type === 'income' ? old.amount : -old.amount;
+    const newDelta = next.type === 'income' ? next.amount : -next.amount;
+    await tx
+      .update(wallets)
+      .set({ balance: sql`${wallets.balance} - ${oldDelta}` })
+      .where(eq(wallets.id, old.walletId));
+    await tx
+      .update(wallets)
+      .set({ balance: sql`${wallets.balance} + ${newDelta}` })
+      .where(eq(wallets.id, next.walletId));
+
+    await tx
+      .update(transactions)
+      .set({
+        walletId: next.walletId,
+        type: next.type,
+        amount: next.amount,
+        category: input.category ?? old.category,
+        note: input.note !== undefined ? input.note : old.note,
+        receipt: input.receipt !== undefined ? input.receipt : old.receipt,
+        date: input.date ?? old.date,
+      })
+      .where(eq(transactions.id, id));
+  });
+}
+
 export async function deleteTransaction(id: number) {
   await db.transaction(async (tx) => {
     const [row] = await tx.select().from(transactions).where(eq(transactions.id, id));

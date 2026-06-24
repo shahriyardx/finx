@@ -135,11 +135,7 @@ export default function ActivityScreen() {
                 <Pressable
                   key={t.id}
                   onLongPress={() => confirmDelete(t.id)}
-                  onPress={
-                    t.receipt
-                      ? () => router.push(`/modals/receipt?uri=${encodeURIComponent(t.receipt!)}`)
-                      : undefined
-                  }>
+                  onPress={() => router.push(`/modals/transaction-form?id=${t.id}`)}>
                   <TransactionRow
                     type={t.type}
                     amount={t.amount}
