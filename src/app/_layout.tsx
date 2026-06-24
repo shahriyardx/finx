@@ -54,6 +54,14 @@ function RootNavigator() {
         options={{ presentation: 'modal', headerShown: true, title: 'Record payment' }}
       />
       <Stack.Screen
+        name="modals/transfer-form"
+        options={{ presentation: 'modal', headerShown: true, title: 'Transfer' }}
+      />
+      <Stack.Screen
+        name="modals/receipt"
+        options={{ presentation: 'modal', headerShown: true, title: 'Receipt' }}
+      />
+      <Stack.Screen
         name="modals/change-pin"
         options={{ presentation: 'modal', headerShown: true, title: 'Change PIN' }}
       />

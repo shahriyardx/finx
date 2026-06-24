@@ -26,6 +26,24 @@ export const transactions = sqliteTable('transactions', {
   amount: integer('amount').notNull(),
   category: text('category').notNull().default('other'),
   note: text('note'),
+  receipt: text('receipt'), // local file uri of an attached receipt photo, optional
+  date: integer('date').notNull(),
+  createdAt: integer('created_at')
+    .notNull()
+    .default(sql`(unixepoch() * 1000)`),
+});
+
+/** Money moved between two wallets. Kept out of the income/expense ledger. */
+export const transfers = sqliteTable('transfers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  fromWalletId: integer('from_wallet_id')
+    .notNull()
+    .references(() => wallets.id, { onDelete: 'cascade' }),
+  toWalletId: integer('to_wallet_id')
+    .notNull()
+    .references(() => wallets.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(),
+  note: text('note'),
   date: integer('date').notNull(),
   createdAt: integer('created_at')
     .notNull()
@@ -92,3 +110,5 @@ export type NewPerson = typeof persons.$inferInsert;
 export type Debt = typeof debts.$inferSelect;
 export type NewDebt = typeof debts.$inferInsert;
 export type DebtPayment = typeof debtPayments.$inferSelect;
+export type Transfer = typeof transfers.$inferSelect;
+export type NewTransfer = typeof transfers.$inferInsert;

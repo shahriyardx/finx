@@ -1,4 +1,6 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -12,6 +14,7 @@ import { wallets } from '@/db/schema';
 import { useTheme } from '@/hooks/use-theme';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/categories';
 import { parseMoney } from '@/lib/format';
+import { captureReceiptPhoto, pickReceiptFromLibrary } from '@/lib/receipt';
 
 type Type = 'income' | 'expense';
 
@@ -29,6 +32,7 @@ export default function TransactionForm() {
   );
   const [category, setCategory] = useState('other');
   const [note, setNote] = useState('');
+  const [receipt, setReceipt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const effectiveWallet = walletId ?? list[0]?.id ?? null;
@@ -39,8 +43,20 @@ export default function TransactionForm() {
   const save = async () => {
     if (!canSave || effectiveWallet === null) return;
     setSaving(true);
-    await addTransaction({ walletId: effectiveWallet, type, amount: minor, category, note: note.trim() || undefined });
+    await addTransaction({
+      walletId: effectiveWallet,
+      type,
+      amount: minor,
+      category,
+      note: note.trim() || undefined,
+      receipt,
+    });
     router.back();
+  };
+
+  const addReceipt = async (from: 'camera' | 'library') => {
+    const uri = from === 'camera' ? await captureReceiptPhoto() : await pickReceiptFromLibrary();
+    if (uri) setReceipt(uri);
   };
 
   if (list.length === 0) {
@@ -149,6 +165,40 @@ export default function TransactionForm() {
           style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
 
+        <ThemedText type="small" themeColor="textSecondary">
+          Receipt (optional)
+        </ThemedText>
+        {receipt ? (
+          <View style={styles.receiptRow}>
+            <Image source={{ uri: receipt }} style={styles.receiptThumb} contentFit="cover" />
+            <Pressable onPress={() => setReceipt(null)} hitSlop={8} style={styles.receiptRemove}>
+              <MaterialCommunityIcons name="trash-can-outline" size={18} color={theme.expense} />
+              <ThemedText type="small" style={{ color: theme.expense, fontWeight: '600' }}>
+                Remove
+              </ThemedText>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.receiptRow}>
+            <Pressable
+              onPress={() => addReceipt('camera')}
+              style={[styles.receiptBtn, { backgroundColor: theme.backgroundElement }]}>
+              <MaterialCommunityIcons name="camera-outline" size={18} color={theme.text} />
+              <ThemedText type="small" style={{ fontWeight: '600' }}>
+                Take photo
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => addReceipt('library')}
+              style={[styles.receiptBtn, { backgroundColor: theme.backgroundElement }]}>
+              <MaterialCommunityIcons name="image-outline" size={18} color={theme.text} />
+              <ThemedText type="small" style={{ fontWeight: '600' }}>
+                Choose
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
+
         <Pressable
           onPress={save}
           disabled={!canSave}
@@ -171,4 +221,16 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
   save: { marginTop: Spacing.three, padding: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
   empty: { textAlign: 'center', paddingVertical: Spacing.four },
+  receiptRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, marginBottom: Spacing.two },
+  receiptBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  receiptThumb: { width: 64, height: 64, borderRadius: Spacing.two },
+  receiptRemove: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
 });

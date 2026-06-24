@@ -7,6 +7,7 @@ import {
   persons,
   settings,
   transactions,
+  transfers,
   wallets,
   type NewPerson,
 } from '@/db/schema';
@@ -46,6 +47,7 @@ export async function addTransaction(input: {
   amount: number; // positive minor units
   category?: string;
   note?: string;
+  receipt?: string | null;
   date?: number;
 }) {
   const delta = input.type === 'income' ? input.amount : -input.amount;
@@ -56,6 +58,7 @@ export async function addTransaction(input: {
       amount: input.amount,
       category: input.category ?? 'other',
       note: input.note,
+      receipt: input.receipt ?? null,
       date: input.date ?? now(),
       createdAt: now(),
     });
@@ -76,6 +79,56 @@ export async function deleteTransaction(id: number) {
       .set({ balance: sql`${wallets.balance} + ${reverse}` })
       .where(eq(wallets.id, row.walletId));
     await tx.delete(transactions).where(eq(transactions.id, id));
+  });
+}
+
+// ----------------------------------------------------------------------------
+// Transfers — move money between two wallets atomically
+// ----------------------------------------------------------------------------
+
+export async function createTransfer(input: {
+  fromWalletId: number;
+  toWalletId: number;
+  amount: number; // positive minor units
+  note?: string;
+  date?: number;
+}) {
+  if (input.fromWalletId === input.toWalletId) throw new Error('Pick two different wallets.');
+  if (input.amount <= 0) throw new Error('Amount must be greater than zero.');
+  await db.transaction(async (tx) => {
+    await tx.insert(transfers).values({
+      fromWalletId: input.fromWalletId,
+      toWalletId: input.toWalletId,
+      amount: input.amount,
+      note: input.note,
+      date: input.date ?? now(),
+      createdAt: now(),
+    });
+    await tx
+      .update(wallets)
+      .set({ balance: sql`${wallets.balance} - ${input.amount}` })
+      .where(eq(wallets.id, input.fromWalletId));
+    await tx
+      .update(wallets)
+      .set({ balance: sql`${wallets.balance} + ${input.amount}` })
+      .where(eq(wallets.id, input.toWalletId));
+  });
+}
+
+/** Undo a transfer: move the money back and remove the record. */
+export async function deleteTransfer(id: number) {
+  await db.transaction(async (tx) => {
+    const [row] = await tx.select().from(transfers).where(eq(transfers.id, id));
+    if (!row) return;
+    await tx
+      .update(wallets)
+      .set({ balance: sql`${wallets.balance} + ${row.amount}` })
+      .where(eq(wallets.id, row.fromWalletId));
+    await tx
+      .update(wallets)
+      .set({ balance: sql`${wallets.balance} - ${row.amount}` })
+      .where(eq(wallets.id, row.toWalletId));
+    await tx.delete(transfers).where(eq(transfers.id, id));
   });
 }
 
@@ -246,11 +299,13 @@ export async function resetData(sel: ResetSelection) {
   // per-row deletes and proper change notifications.
   const all = sql`1 = 1`;
   await db.transaction(async (tx) => {
-    if (sel.wallets) await tx.delete(wallets).where(all);
+    if (sel.wallets) await tx.delete(wallets).where(all); // cascades to transfers
     if (sel.people) await tx.delete(persons).where(all);
     if (sel.debts) await tx.delete(debts).where(all);
     if (sel.transactions) {
       await tx.delete(transactions).where(all);
+      // Transfers also move balances; clear them so zeroed balances stay consistent.
+      await tx.delete(transfers).where(all);
       await tx.update(wallets).set({ balance: 0 });
     }
   });
@@ -266,6 +321,7 @@ export type BackupData = {
   exportedAt: number;
   wallets: (typeof wallets.$inferSelect)[];
   transactions: (typeof transactions.$inferSelect)[];
+  transfers: (typeof transfers.$inferSelect)[];
   persons: (typeof persons.$inferSelect)[];
   debts: (typeof debts.$inferSelect)[];
   debtPayments: (typeof debtPayments.$inferSelect)[];
@@ -273,9 +329,10 @@ export type BackupData = {
 };
 
 export async function exportData(): Promise<BackupData> {
-  const [w, t, p, d, dp, s] = await Promise.all([
+  const [w, t, tr, p, d, dp, s] = await Promise.all([
     db.select().from(wallets),
     db.select().from(transactions),
+    db.select().from(transfers),
     db.select().from(persons),
     db.select().from(debts),
     db.select().from(debtPayments),
@@ -283,10 +340,11 @@ export async function exportData(): Promise<BackupData> {
   ]);
   return {
     app: 'finx',
-    version: 1,
+    version: 2,
     exportedAt: now(),
     wallets: w,
     transactions: t,
+    transfers: tr,
     persons: p,
     debts: d,
     debtPayments: dp,
@@ -296,6 +354,7 @@ export async function exportData(): Promise<BackupData> {
 
 function isBackup(x: unknown): x is BackupData {
   const b = x as Partial<BackupData> | null;
+  // `transfers` was added in v2; older backups omit it, so it's not required.
   return (
     !!b &&
     b.app === 'finx' &&
@@ -318,10 +377,12 @@ export async function importData(raw: unknown): Promise<{
   if (!isBackup(raw)) throw new Error('Not a valid FinX backup file.');
   const data = raw;
   const all = sql`1 = 1`;
+  const transfersIn = Array.isArray(data.transfers) ? data.transfers : [];
   await db.transaction(async (tx) => {
     // Wipe children → parents (FK order). WHERE 1=1 keeps live queries fresh.
     await tx.delete(debtPayments).where(all);
     await tx.delete(debts).where(all);
+    await tx.delete(transfers).where(all);
     await tx.delete(transactions).where(all);
     await tx.delete(wallets).where(all);
     await tx.delete(persons).where(all);
@@ -333,6 +394,7 @@ export async function importData(raw: unknown): Promise<{
     if (data.settings.length) await tx.insert(settings).values(data.settings);
     if (data.debts.length) await tx.insert(debts).values(data.debts);
     if (data.transactions.length) await tx.insert(transactions).values(data.transactions);
+    if (transfersIn.length) await tx.insert(transfers).values(transfersIn);
     if (data.debtPayments.length) await tx.insert(debtPayments).values(data.debtPayments);
   });
   return {

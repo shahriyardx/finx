@@ -1,7 +1,8 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useConfirm } from '@/components/confirm-dialog';
@@ -9,10 +10,11 @@ import { Money } from '@/components/money';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TransactionRow } from '@/components/transaction-row';
+import { TransferRow } from '@/components/transfer-row';
 import { Spacing } from '@/constants/theme';
 import { db } from '@/db/client';
 import { deleteWallet } from '@/db/repo';
-import { transactions, wallets } from '@/db/schema';
+import { transactions, transfers, wallets } from '@/db/schema';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function WalletDetail() {
@@ -30,10 +32,43 @@ export default function WalletDetail() {
     db.select().from(transactions).where(eq(transactions.walletId, walletId)).orderBy(desc(transactions.date)),
     [walletId],
   );
+  const { data: xfers } = useLiveQuery(
+    db
+      .select()
+      .from(transfers)
+      .where(or(eq(transfers.fromWalletId, walletId), eq(transfers.toWalletId, walletId)))
+      .orderBy(desc(transfers.date)),
+    [walletId],
+  );
+  const { data: allWallets } = useLiveQuery(db.select().from(wallets));
   const wallet = walletRows?.[0];
 
+  // Merge transactions + transfers into one date-sorted ledger for this wallet.
+  const ledger = useMemo(() => {
+    const names = new Map((allWallets ?? []).map((w) => [w.id, w.name]));
+    const items: (
+      | { kind: 'tx'; id: number; date: number; row: (typeof transactions.$inferSelect) }
+      | { kind: 'xfer'; id: number; date: number; direction: 'in' | 'out'; otherName: string; amount: number; note: string | null }
+    )[] = [];
+    for (const t of txns ?? []) items.push({ kind: 'tx', id: t.id, date: t.date, row: t });
+    for (const x of xfers ?? []) {
+      const direction = x.toWalletId === walletId ? 'in' : 'out';
+      const otherId = direction === 'in' ? x.fromWalletId : x.toWalletId;
+      items.push({
+        kind: 'xfer',
+        id: x.id,
+        date: x.date,
+        direction,
+        otherName: names.get(otherId) ?? 'Wallet',
+        amount: x.amount,
+        note: x.note,
+      });
+    }
+    return items.sort((a, b) => b.date - a.date);
+  }, [txns, xfers, allWallets, walletId]);
+
   const confirmDelete = async () => {
-    if (await confirm({ title: 'Delete wallet', message: 'This also removes its transactions.' })) {
+    if (await confirm({ title: 'Delete wallet', message: 'This also removes its transactions and transfers.' })) {
       await deleteWallet(walletId);
       router.back();
     }
@@ -76,33 +111,56 @@ export default function WalletDetail() {
             </ThemedText>
           </Pressable>
           <Pressable
-            onPress={confirmDelete}
+            onPress={() => router.push(`/modals/transfer-form?fromWalletId=${walletId}`)}
             style={[styles.action, { backgroundColor: theme.backgroundElement }]}>
-            <ThemedText style={{ color: theme.expense, fontWeight: '700' }}>Delete</ThemedText>
+            <ThemedText style={{ color: theme.text, fontWeight: '700' }}>Transfer</ThemedText>
           </Pressable>
         </View>
 
         <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Transactions
+          Activity
         </ThemedText>
-        {(txns ?? []).length === 0 ? (
+        {ledger.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
             No transactions in this wallet yet.
           </ThemedText>
         ) : (
           <ThemedView type="backgroundElement" style={styles.card}>
-            {(txns ?? []).map((t) => (
-              <TransactionRow
-                key={t.id}
-                type={t.type}
-                amount={t.amount}
-                category={t.category}
-                note={t.note}
-                date={t.date}
-              />
-            ))}
+            {ledger.map((item) =>
+              item.kind === 'tx' ? (
+                <TransactionRow
+                  key={`tx-${item.id}`}
+                  type={item.row.type}
+                  amount={item.row.amount}
+                  category={item.row.category}
+                  note={item.row.note}
+                  date={item.row.date}
+                  hasReceipt={!!item.row.receipt}
+                  onPress={
+                    item.row.receipt
+                      ? () => router.push(`/modals/receipt?uri=${encodeURIComponent(item.row.receipt!)}`)
+                      : undefined
+                  }
+                />
+              ) : (
+                <TransferRow
+                  key={`xfer-${item.id}`}
+                  direction={item.direction}
+                  amount={item.amount}
+                  otherName={item.otherName}
+                  note={item.note}
+                  date={item.date}
+                />
+              ),
+            )}
           </ThemedView>
         )}
+
+        <Pressable onPress={confirmDelete} style={styles.deleteBtn} hitSlop={8}>
+          <ThemedText type="small" style={{ color: theme.expense, fontWeight: '600' }}>
+            Delete wallet
+          </ThemedText>
+        </Pressable>
       </ScrollView>
     </ThemedView>
   );
@@ -118,4 +176,5 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 24, lineHeight: 30, marginTop: Spacing.two },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
   empty: { paddingVertical: Spacing.four, textAlign: 'center' },
+  deleteBtn: { alignItems: 'center', paddingVertical: Spacing.three },
 });

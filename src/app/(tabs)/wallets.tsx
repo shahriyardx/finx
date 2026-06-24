@@ -30,12 +30,21 @@ export default function WalletsScreen() {
               <ThemedText type="subtitle">Wallets</ThemedText>
               <Money value={total} type="small" themeColor="textSecondary" />
             </View>
-            <Pressable
-              onPress={() => router.push('/modals/wallet-form')}
-              style={[styles.add, { backgroundColor: theme.accent }]}>
-              <MaterialCommunityIcons name="plus" size={18} color={theme.onAccent} />
-              <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Add</ThemedText>
-            </Pressable>
+            <View style={styles.headBtns}>
+              {list.length >= 2 ? (
+                <Pressable
+                  onPress={() => router.push('/modals/transfer-form')}
+                  style={[styles.iconBtn, { backgroundColor: theme.backgroundElement }]}>
+                  <MaterialCommunityIcons name="swap-horizontal" size={20} color={theme.text} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                onPress={() => router.push('/modals/wallet-form')}
+                style={[styles.add, { backgroundColor: theme.accent }]}>
+                <MaterialCommunityIcons name="plus" size={18} color={theme.onAccent} />
+                <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Add</ThemedText>
+              </Pressable>
+            </View>
           </View>
 
           {list.length === 0 ? (
@@ -71,6 +80,14 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.three, paddingBottom: Spacing.six },
   body: { gap: Spacing.three },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headBtns: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Spacing.three,
+  },
   add: {
     flexDirection: 'row',
     alignItems: 'center',

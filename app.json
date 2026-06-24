@@ -48,7 +48,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow FinX to access your photos to set a person's picture."
+          "photosPermission": "Allow FinX to access your photos for profile pictures and receipts.",
+          "cameraPermission": "Allow FinX to use the camera to capture receipt photos."
         }
       ],
       [
