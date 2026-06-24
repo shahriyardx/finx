@@ -256,4 +256,91 @@ export async function resetData(sel: ResetSelection) {
   });
 }
 
+// ----------------------------------------------------------------------------
+// Backup: export / import
+// ----------------------------------------------------------------------------
+
+export type BackupData = {
+  app: 'finx';
+  version: number;
+  exportedAt: number;
+  wallets: (typeof wallets.$inferSelect)[];
+  transactions: (typeof transactions.$inferSelect)[];
+  persons: (typeof persons.$inferSelect)[];
+  debts: (typeof debts.$inferSelect)[];
+  debtPayments: (typeof debtPayments.$inferSelect)[];
+  settings: (typeof settings.$inferSelect)[];
+};
+
+export async function exportData(): Promise<BackupData> {
+  const [w, t, p, d, dp, s] = await Promise.all([
+    db.select().from(wallets),
+    db.select().from(transactions),
+    db.select().from(persons),
+    db.select().from(debts),
+    db.select().from(debtPayments),
+    db.select().from(settings),
+  ]);
+  return {
+    app: 'finx',
+    version: 1,
+    exportedAt: now(),
+    wallets: w,
+    transactions: t,
+    persons: p,
+    debts: d,
+    debtPayments: dp,
+    settings: s,
+  };
+}
+
+function isBackup(x: unknown): x is BackupData {
+  const b = x as Partial<BackupData> | null;
+  return (
+    !!b &&
+    b.app === 'finx' &&
+    Array.isArray(b.wallets) &&
+    Array.isArray(b.transactions) &&
+    Array.isArray(b.persons) &&
+    Array.isArray(b.debts) &&
+    Array.isArray(b.debtPayments) &&
+    Array.isArray(b.settings)
+  );
+}
+
+/** Replace ALL existing data with the backup. Throws on an invalid payload. */
+export async function importData(raw: unknown): Promise<{
+  wallets: number;
+  transactions: number;
+  persons: number;
+  debts: number;
+}> {
+  if (!isBackup(raw)) throw new Error('Not a valid FinX backup file.');
+  const data = raw;
+  const all = sql`1 = 1`;
+  await db.transaction(async (tx) => {
+    // Wipe children → parents (FK order). WHERE 1=1 keeps live queries fresh.
+    await tx.delete(debtPayments).where(all);
+    await tx.delete(debts).where(all);
+    await tx.delete(transactions).where(all);
+    await tx.delete(wallets).where(all);
+    await tx.delete(persons).where(all);
+    await tx.delete(settings).where(all);
+
+    // Insert parents → children. Explicit ids preserve the FK graph.
+    if (data.persons.length) await tx.insert(persons).values(data.persons);
+    if (data.wallets.length) await tx.insert(wallets).values(data.wallets);
+    if (data.settings.length) await tx.insert(settings).values(data.settings);
+    if (data.debts.length) await tx.insert(debts).values(data.debts);
+    if (data.transactions.length) await tx.insert(transactions).values(data.transactions);
+    if (data.debtPayments.length) await tx.insert(debtPayments).values(data.debtPayments);
+  });
+  return {
+    wallets: data.wallets.length,
+    transactions: data.transactions.length,
+    persons: data.persons.length,
+    debts: data.debts.length,
+  };
+}
+
 export { and, eq, sql };

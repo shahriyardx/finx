@@ -56,7 +56,8 @@
         {
           "contactsPermission": "Allow FinX to access contacts to fill a person's phone number."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -9,9 +9,10 @@ import { useConfirm } from '@/components/confirm-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { resetData, setSetting, type ResetSelection } from '@/db/repo';
+import { importData, resetData, setSetting, type ResetSelection } from '@/db/repo';
 import { useCurrency } from '@/hooks/use-currency';
 import { useTheme } from '@/hooks/use-theme';
+import { exportBackupFile, pickBackupFile } from '@/lib/backup';
 import { CURRENCIES } from '@/lib/format';
 
 type ResetKey = keyof ResetSelection;
@@ -51,6 +52,54 @@ export default function SettingsScreen() {
     }
     await resetData(chosen);
     setSel({});
+  };
+
+  const doExport = async () => {
+    try {
+      const res = await exportBackupFile();
+      if (res.method === 'saved') {
+        await confirm({
+          title: 'Backup saved',
+          message: `Saved ${res.name} to your chosen folder.`,
+          confirmLabel: 'OK',
+          destructive: false,
+        });
+      }
+    } catch (e) {
+      await confirm({
+        title: 'Export failed',
+        message: e instanceof Error ? e.message : 'Could not export data.',
+        confirmLabel: 'OK',
+        destructive: false,
+      });
+    }
+  };
+
+  const doImport = async () => {
+    try {
+      const parsed = await pickBackupFile();
+      if (parsed == null) return; // user cancelled the file picker
+      const ok = await confirm({
+        title: 'Import backup?',
+        message: 'This replaces ALL current data with the file contents. Cannot be undone.',
+        confirmLabel: 'Import',
+      });
+      if (!ok) return;
+      const counts = await importData(parsed);
+      await confirm({
+        title: 'Import complete',
+        message: `Restored ${counts.wallets} wallets, ${counts.transactions} transactions, ${counts.persons} people, ${counts.debts} debts.`,
+        confirmLabel: 'OK',
+        destructive: false,
+      });
+    } catch (e) {
+      await confirm({
+        title: 'Import failed',
+        message: e instanceof Error ? e.message : 'Invalid or unreadable backup file.',
+        confirmLabel: 'OK',
+        destructive: false,
+      });
+    }
   };
 
   return (
@@ -118,10 +167,27 @@ export default function SettingsScreen() {
             Data
           </ThemedText>
           <ThemedView type="backgroundElement" style={styles.card}>
+            <Pressable style={styles.rowBetween} onPress={doExport}>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="export-variant" size={20} color={theme.text} />
+                <ThemedText type="default">Export data</ThemedText>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={theme.textSecondary} />
+            </Pressable>
+            <Pressable style={styles.rowBetween} onPress={doImport}>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="import" size={20} color={theme.text} />
+                <ThemedText type="default">Import data</ThemedText>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={theme.textSecondary} />
+            </Pressable>
             <Pressable style={styles.rowBetween} onPress={() => setResetOpen(true)}>
-              <ThemedText type="default" style={{ color: theme.expense }}>
-                Reset data
-              </ThemedText>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="trash-can-outline" size={20} color={theme.expense} />
+                <ThemedText type="default" style={{ color: theme.expense }}>
+                  Reset data
+                </ThemedText>
+              </View>
               <MaterialCommunityIcons name="chevron-right" size={22} color={theme.textSecondary} />
             </Pressable>
           </ThemedView>
@@ -186,7 +252,8 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginTop: Spacing.one },
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
   card: { borderRadius: Spacing.three, padding: Spacing.three, marginTop: Spacing.one, gap: Spacing.two },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.one },
+  dataRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   btnRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
   secBtn: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
   flex: { flex: 1, gap: 2 },
