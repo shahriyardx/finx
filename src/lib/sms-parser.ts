@@ -64,6 +64,29 @@ export function parseCityBankSms(body: string): ParsedSms | null {
 const BKASH_INCOME = ['received', 'cash in', 'cashback', 'deposit', 'remittance', 'add money', 'refund'];
 const BKASH_EXPENSE = ['payment of', 'cash out', 'bill', 'send money', 'sent', 'paid'];
 
+// Transaction kind → friendly note. First match (in order) wins, so more
+// specific phrases come before generic ones.
+const BKASH_KINDS: [RegExp, string][] = [
+  [/remittance/i, 'Remittance'],
+  [/cash\s*in/i, 'Cash In'],
+  [/cash\s*out/i, 'Cash Out'],
+  [/send\s*money/i, 'Send Money'],
+  [/mobile\s*recharge|recharge/i, 'Mobile Recharge'],
+  [/add\s*money/i, 'Add Money'],
+  [/cashback/i, 'Cashback'],
+  [/bill/i, 'Bill Payment'],
+  [/payment\s*of|\bpayment\b|\bpaid\b/i, 'Payment'],
+  [/received/i, 'Money Received'],
+  [/refund/i, 'Refund'],
+];
+
+function bkashNote(body: string): string | undefined {
+  for (const [re, label] of BKASH_KINDS) {
+    if (re.test(body)) return label;
+  }
+  return undefined;
+}
+
 export function parseBkashSms(body: string): ParsedSms | null {
   const lower = body.toLowerCase();
   const type: ParsedSms['type'] | null = BKASH_INCOME.some((w) => lower.includes(w))
@@ -81,7 +104,7 @@ export function parseBkashSms(body: string): ParsedSms | null {
   const balMatch = body.match(/Balance:?\s*Tk\.?\s*([\d,]+(?:\.\d+)?)/i);
   const balance = balMatch ? toMinor(balMatch[1]) : undefined;
 
-  return { type, amount, balance };
+  return { type, amount, balance, note: bkashNote(body) };
 }
 
 /**
