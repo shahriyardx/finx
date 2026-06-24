@@ -12,6 +12,8 @@ export const wallets = sqliteTable('wallets', {
   balance: integer('balance').notNull().default(0),
   color: text('color').notNull().default('#10B981'),
   icon: text('icon').notNull().default('wallet'),
+  // Optional bank-SMS sender mapped to this wallet (bank id from lib/banks).
+  smsSender: text('sms_sender'),
   createdAt: integer('created_at')
     .notNull()
     .default(sql`(unixepoch() * 1000)`),

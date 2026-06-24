@@ -1,15 +1,20 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { eq } from 'drizzle-orm';
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/auth-context';
 import { useConfirm } from '@/components/confirm-dialog';
+import { SMS_IMPORT_KEY } from '@/components/sms-importer';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { db } from '@/db/client';
 import { importData, resetData, setSetting, type ResetSelection } from '@/db/repo';
+import { settings } from '@/db/schema';
 import { useCurrency } from '@/hooks/use-currency';
 import { useTheme } from '@/hooks/use-theme';
 import { exportBackupFile, pickBackupFile } from '@/lib/backup';
@@ -31,6 +36,9 @@ export default function SettingsScreen() {
   const { biometricEnabled, biometricAvailable, enableBiometric, lock } = useAuth();
   const [resetOpen, setResetOpen] = useState(false);
   const [sel, setSel] = useState<ResetSelection>({});
+
+  const { data: smsRows } = useLiveQuery(db.select().from(settings).where(eq(settings.key, SMS_IMPORT_KEY)));
+  const smsImport = smsRows?.[0]?.value === '1';
 
   const selectedCount = Object.values(sel).filter(Boolean).length;
 
@@ -162,6 +170,29 @@ export default function SettingsScreen() {
               </Pressable>
             </View>
           </ThemedView>
+
+          {Platform.OS === 'android' ? (
+            <>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+                Automation
+              </ThemedText>
+              <ThemedView type="backgroundElement" style={styles.card}>
+                <View style={styles.rowBetween}>
+                  <View style={styles.flex}>
+                    <ThemedText type="default">Auto-import bank SMS</ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Add bank transactions as their SMS arrive. Map a bank to a wallet in the wallet’s settings.
+                    </ThemedText>
+                  </View>
+                  <Switch
+                    value={smsImport}
+                    onValueChange={(on) => setSetting(SMS_IMPORT_KEY, on ? '1' : '0')}
+                    trackColor={{ true: theme.accent }}
+                  />
+                </View>
+              </ThemedView>
+            </>
+          ) : null}
 
           <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
             Data

@@ -1,0 +1,1 @@
+ALTER TABLE `wallets` ADD `sms_sender` text;

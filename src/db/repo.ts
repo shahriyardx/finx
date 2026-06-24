@@ -19,22 +19,42 @@ const now = () => Date.now();
 // Wallets
 // ----------------------------------------------------------------------------
 
-export async function createWallet(input: { name: string; color?: string; icon?: string; opening?: number }) {
+export async function createWallet(input: {
+  name: string;
+  color?: string;
+  icon?: string;
+  opening?: number;
+  smsSender?: string | null;
+}) {
   await db.insert(wallets).values({
     name: input.name,
     color: input.color,
     icon: input.icon,
     balance: input.opening ?? 0,
+    smsSender: input.smsSender ?? null,
     createdAt: now(),
   });
 }
 
-export async function updateWallet(id: number, input: { name?: string; color?: string; icon?: string }) {
+export async function updateWallet(
+  id: number,
+  input: { name?: string; color?: string; icon?: string; smsSender?: string | null },
+) {
   await db.update(wallets).set(input).where(eq(wallets.id, id));
 }
 
 export async function deleteWallet(id: number) {
   await db.delete(wallets).where(eq(wallets.id, id));
+}
+
+/** Find the wallet mapped to a given bank-SMS sender id. */
+export async function findWalletBySmsSender(smsSender: string) {
+  const [row] = await db
+    .select()
+    .from(wallets)
+    .where(eq(wallets.smsSender, smsSender))
+    .limit(1);
+  return row ?? null;
 }
 
 // ----------------------------------------------------------------------------

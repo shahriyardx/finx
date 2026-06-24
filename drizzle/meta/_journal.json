@@ -15,6 +15,13 @@
       "when": 1782314431497,
       "tag": "0001_amusing_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1782318288509,
+      "tag": "0002_shallow_mesmero",
+      "breakpoints": true
     }
   ]
 }

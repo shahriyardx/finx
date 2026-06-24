@@ -12,6 +12,7 @@ import { db } from '@/db/client';
 import { createWallet, updateWallet } from '@/db/repo';
 import { wallets } from '@/db/schema';
 import { useTheme } from '@/hooks/use-theme';
+import { BANKS } from '@/lib/banks';
 import { WALLET_COLORS, WALLET_ICONS, type WalletIconName } from '@/lib/categories';
 import { parseMoney } from '@/lib/format';
 
@@ -30,6 +31,7 @@ export default function WalletFormScreen() {
   const [opening, setOpening] = useState('');
   const [color, setColor] = useState<string>(WALLET_COLORS[0]);
   const [icon, setIcon] = useState<WalletIconName>(WALLET_ICONS[0]);
+  const [smsSender, setSmsSender] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -40,6 +42,7 @@ export default function WalletFormScreen() {
       setName(w.name);
       setColor(w.color);
       setIcon(w.icon as WalletIconName);
+      setSmsSender(w.smsSender ?? null);
       setLoaded(true);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
@@ -51,9 +54,9 @@ export default function WalletFormScreen() {
     if (!canSave) return;
     setSaving(true);
     if (editId) {
-      await updateWallet(editId, { name: name.trim(), color, icon });
+      await updateWallet(editId, { name: name.trim(), color, icon, smsSender });
     } else {
-      await createWallet({ name: name.trim(), color, icon, opening: parseMoney(opening) });
+      await createWallet({ name: name.trim(), color, icon, opening: parseMoney(opening), smsSender });
     }
     router.back();
   };
@@ -121,6 +124,33 @@ export default function WalletFormScreen() {
           ))}
         </View>
 
+        <ThemedText type="small" themeColor="textSecondary">
+          Auto-import SMS from
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
+          Transactions from this bank’s SMS are added to this wallet automatically (Android).
+        </ThemedText>
+        <View style={styles.chips}>
+          {[{ id: null, label: 'None', supported: true }, ...BANKS].map((b) => {
+            const active = smsSender === b.id;
+            return (
+              <Pressable
+                key={b.id ?? 'none'}
+                onPress={() => setSmsSender(b.id)}
+                style={[
+                  styles.chip,
+                  { backgroundColor: theme.backgroundElement },
+                  active && { backgroundColor: theme.accent },
+                ]}>
+                <ThemedText style={{ color: active ? theme.onAccent : theme.text }}>
+                  {b.label}
+                  {b.supported ? '' : ' (soon)'}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <Pressable
           onPress={save}
           disabled={!canSave}
@@ -142,5 +172,8 @@ const styles = StyleSheet.create({
   swatch: { width: 40, height: 40, borderRadius: 20 },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
   iconWrap: { borderRadius: 18, borderWidth: 3, borderColor: 'transparent', padding: 2 },
+  hint: { marginBottom: Spacing.one },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
+  chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
   save: { marginTop: Spacing.four, padding: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
 });
