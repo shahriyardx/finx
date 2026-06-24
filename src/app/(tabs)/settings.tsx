@@ -2,6 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -220,6 +221,21 @@ export default function SettingsScreen() {
                 </ThemedText>
               </View>
               <MaterialCommunityIcons name="chevron-right" size={22} color={theme.textSecondary} />
+            </Pressable>
+          </ThemedView>
+
+          <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+            About
+          </ThemedText>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <Pressable
+              style={styles.rowBetween}
+              onPress={() => WebBrowser.openBrowserAsync('https://shahriyar.dev/apps/finx/privacy')}>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="shield-lock-outline" size={20} color={theme.text} />
+                <ThemedText type="default">Privacy policy</ThemedText>
+              </View>
+              <MaterialCommunityIcons name="open-in-new" size={20} color={theme.textSecondary} />
             </Pressable>
           </ThemedView>
         </SafeAreaView>
