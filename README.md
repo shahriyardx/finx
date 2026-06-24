@@ -1,13 +1,34 @@
-# Welcome to your Expo app 👋
+# FinX
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A local-only personal finance app for Android & iOS, built with Expo. All data
+stays on your device — no account, no backend.
+
+## Features
+
+- **Wallets** with balances in a single app-wide currency (default BDT).
+- **Income & expense** tracking that updates wallet balances atomically.
+- **Lend / borrow** debts tied to people, optionally linked to a wallet, with
+  repayment tracking.
+- **Activity** view filterable by week / month / year / custom period.
+- **PIN lock** (4-digit) with optional **biometric unlock** and biometric-based
+  PIN recovery — recovery never wipes data.
+- **Import / export** all data as a plain JSON backup (Android saves to a folder
+  you pick; iOS uses the share sheet).
+- Contacts & photo integration, Wise-inspired green theme, native tabs.
+
+## Tech stack
+
+- **Expo SDK 56** (expo-router, React 19, React Native 0.85)
+- **Drizzle ORM** over `expo-sqlite` with generated migrations
+- `expo-secure-store` + `expo-local-authentication` for PIN/biometric auth
+- Amounts stored as integer minor units (cents) to avoid float drift
 
 ## Get started
 
 1. Install dependencies
 
    ```bash
-   npm install
+   bun install
    ```
 
 2. Start the app
@@ -16,41 +37,35 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+   Open it in a development build, Android emulator, or iOS simulator.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Database migrations
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Schema lives in `src/db/schema.ts`. After changing it, regenerate migrations:
 
 ```bash
-npm run reset-project
+bun run db:generate
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Migrations apply automatically at runtime via `useMigrations`.
 
-### Other setup steps
+## Build a release APK (Android)
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+cd android && ./gradlew assembleRelease
+adb install -r android/app/build/outputs/apk/release/app-release.apk
+```
 
-## Learn more
+Prebuilt APKs are attached to [GitHub Releases](https://github.com/shahriyardx/finx/releases).
 
-To learn more about developing your project with Expo, look at the following resources:
+## Project layout
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```
+src/
+  app/        # expo-router routes: (auth), (tabs), modals, detail pages
+  auth/       # PIN/biometric auth context + secure storage
+  components/ # shared UI (pin pad, confirm dialog, empty state, ...)
+  db/         # Drizzle schema, client, repo (mutations + backup)
+  lib/        # backup, formatting, date-range, categories
+  constants/  # theme (Wise-style green palette)
+```
