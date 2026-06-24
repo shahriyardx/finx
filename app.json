@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "finx",
+    "name": "FinX",
     "slug": "finx",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,7 +13,13 @@
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.shahriyardx.finx"
     },
     "web": {
       "output": "static",
@@ -43,6 +49,12 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow FinX to access your photos to set a person's picture."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Allow FinX to access contacts to fill a person's phone number."
         }
       ]
     ],

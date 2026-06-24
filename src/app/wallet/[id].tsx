@@ -1,3 +1,4 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { desc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -48,7 +49,16 @@ export default function WalletDetail() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: wallet.name }} />
+      <Stack.Screen
+        options={{
+          title: wallet.name,
+          headerRight: () => (
+            <Pressable onPress={() => router.push(`/modals/wallet-form?id=${walletId}`)} hitSlop={10}>
+              <MaterialCommunityIcons name="pencil" size={22} color={theme.accent} />
+            </Pressable>
+          ),
+        }}
+      />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.hero, { backgroundColor: theme.hero }]}>
           <ThemedText type="small" style={{ color: theme.heroAccent }}>

@@ -1,3 +1,4 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { desc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -53,7 +54,16 @@ export default function PersonDetail() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{ title: person.name }} />
+      <Stack.Screen
+        options={{
+          title: person.name,
+          headerRight: () => (
+            <Pressable onPress={() => router.push(`/modals/person-form?id=${personId}`)} hitSlop={10}>
+              <MaterialCommunityIcons name="pencil" size={22} color={theme.accent} />
+            </Pressable>
+          ),
+        }}
+      />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.hero, { backgroundColor: theme.hero }]}>
           <View style={styles.heroTop}>

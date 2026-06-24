@@ -87,6 +87,13 @@ export async function createPerson(input: Omit<NewPerson, 'id' | 'createdAt'>) {
   await db.insert(persons).values({ ...input, createdAt: now() });
 }
 
+export async function updatePerson(
+  id: number,
+  input: { name?: string; phone?: string | null; note?: string | null; avatar?: string | null },
+) {
+  await db.update(persons).set(input).where(eq(persons.id, id));
+}
+
 export async function deletePerson(id: number) {
   await db.delete(persons).where(eq(persons.id, id));
 }
