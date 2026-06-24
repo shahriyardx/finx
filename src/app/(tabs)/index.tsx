@@ -36,6 +36,7 @@ function readableText(hex: string): string {
 
 type Card = {
   key: string;
+  walletId?: number;
   label: string;
   bg: string;
   text: string;
@@ -91,6 +92,7 @@ export default function Dashboard() {
       const onWhite = text === '#ffffff';
       return {
         key: `w${w.id}`,
+        walletId: w.id,
         label: w.name,
         bg: w.color,
         text,
@@ -130,7 +132,10 @@ export default function Dashboard() {
               scrollEventThrottle={16}
               contentContainerStyle={{ gap: CARD_GAP, paddingRight: cardWidth ? CARD_GAP : 0 }}>
               {cards.map((c) => (
-                <View key={c.key} style={[styles.hero, styles.carouselCard, { backgroundColor: c.bg, width: cardWidth || undefined }]}>
+                <Pressable
+                  key={c.key}
+                  onPress={c.walletId ? () => router.push(`/wallet/${c.walletId}`) : undefined}
+                  style={[styles.hero, styles.carouselCard, { backgroundColor: c.bg, width: cardWidth || undefined }]}>
                   {c.key === 'total' ? (
                     <View style={[styles.badge, { backgroundColor: theme.heroAccent }]}>
                       <ThemedText style={[styles.badgeText, { color: theme.hero }]}>{currency}</ThemedText>
@@ -166,7 +171,7 @@ export default function Dashboard() {
                       </View>
                     </View>
                   </View>
-                </View>
+                </Pressable>
               ))}
               {/* Add-wallet card */}
               <Pressable
@@ -180,7 +185,9 @@ export default function Dashboard() {
                 <View style={[styles.statIcon, { backgroundColor: theme.backgroundElement }]}>
                   <MaterialCommunityIcons name="plus" size={26} color={theme.accent} />
                 </View>
-                <ThemedText style={{ fontWeight: '700' }}>Add wallet</ThemedText>
+                <ThemedText numberOfLines={1} style={{ fontWeight: '700', textAlign: 'center' }}>
+                  Add wallet
+                </ThemedText>
               </Pressable>
             </ScrollView>
             <View style={styles.dots}>
