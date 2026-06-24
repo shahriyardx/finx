@@ -4,9 +4,8 @@ import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
 
+import { ColorPicker } from '@/components/color-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WalletIconBadge } from '@/components/wallet-icon-badge';
@@ -137,16 +136,8 @@ export default function WalletFormScreen() {
 
         <Modal visible={pickerOpen} transparent animationType="fade" onRequestClose={() => setPickerOpen(false)}>
           <Pressable style={styles.pickerBackdrop} onPress={() => setPickerOpen(false)}>
-            <GestureHandlerRootView style={styles.pickerWrap}>
             <Pressable style={[styles.pickerCard, { backgroundColor: theme.background }]} onPress={() => {}}>
-              <ColorPicker
-                value={draftColor}
-                style={styles.picker}
-                onComplete={({ hex }) => setDraftColor(hex)}>
-                <Preview hideInitialColor style={styles.pickerRow} />
-                <Panel1 style={styles.pickerPanel} />
-                <HueSlider style={styles.pickerRow} />
-              </ColorPicker>
+              <ColorPicker value={draftColor} onChange={setDraftColor} />
               <View style={styles.pickerActions}>
                 <Pressable onPress={() => setPickerOpen(false)} style={styles.pickerBtn}>
                   <ThemedText themeColor="textSecondary" style={{ fontWeight: '600' }}>
@@ -163,7 +154,6 @@ export default function WalletFormScreen() {
                 </Pressable>
               </View>
             </Pressable>
-          </GestureHandlerRootView>
           </Pressable>
         </Modal>
 
@@ -235,11 +225,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.5)',
   },
   pickerBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: Spacing.four },
-  pickerWrap: { width: '100%' },
   pickerCard: { borderRadius: Spacing.four, padding: Spacing.four, gap: Spacing.three },
-  picker: { gap: Spacing.three },
-  pickerRow: { borderRadius: Spacing.two, height: 28 },
-  pickerPanel: { borderRadius: Spacing.two, height: 200 },
   pickerActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.two, marginTop: Spacing.two },
   pickerBtn: { paddingHorizontal: Spacing.four, paddingVertical: Spacing.three, alignItems: 'center', justifyContent: 'center' },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },

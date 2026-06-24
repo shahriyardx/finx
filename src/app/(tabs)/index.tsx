@@ -104,9 +104,13 @@ export default function Dashboard() {
     return [totalCard, ...walletCards];
   }, [walletRows, monthTxns, total, income, spend, theme.hero, theme.heroText, theme.heroAccent]);
 
-  const onCarouselLayout = (e: LayoutChangeEvent) => setCardWidth(e.nativeEvent.layout.width);
+  // Cards are narrower than the viewport so the next one peeks on the right.
+  const CARD_GAP = Spacing.three;
+  const onCarouselLayout = (e: LayoutChangeEvent) =>
+    setCardWidth(Math.round(e.nativeEvent.layout.width * 0.84));
+  const snap = cardWidth + CARD_GAP;
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (cardWidth > 0) setPage(Math.round(e.nativeEvent.contentOffset.x / cardWidth));
+    if (snap > 0) setPage(Math.round(e.nativeEvent.contentOffset.x / snap));
   };
 
   return (
@@ -117,12 +121,16 @@ export default function Dashboard() {
           <View onLayout={onCarouselLayout}>
             <ScrollView
               horizontal
-              pagingEnabled
+              decelerationRate="fast"
+              snapToInterval={snap}
+              snapToAlignment="start"
+              disableIntervalMomentum
               showsHorizontalScrollIndicator={false}
               onScroll={onScroll}
-              scrollEventThrottle={16}>
+              scrollEventThrottle={16}
+              contentContainerStyle={{ gap: CARD_GAP, paddingRight: cardWidth ? CARD_GAP : 0 }}>
               {cards.map((c) => (
-                <View key={c.key} style={[styles.hero, { backgroundColor: c.bg, width: cardWidth || undefined }]}>
+                <View key={c.key} style={[styles.hero, styles.carouselCard, { backgroundColor: c.bg, width: cardWidth || undefined }]}>
                   {c.key === 'total' ? (
                     <View style={[styles.badge, { backgroundColor: theme.heroAccent }]}>
                       <ThemedText style={[styles.badgeText, { color: theme.hero }]}>{currency}</ThemedText>
@@ -160,20 +168,32 @@ export default function Dashboard() {
                   </View>
                 </View>
               ))}
+              {/* Add-wallet card */}
+              <Pressable
+                onPress={() => router.push('/modals/wallet-form')}
+                style={[
+                  styles.hero,
+                  styles.carouselCard,
+                  styles.addCard,
+                  { borderColor: theme.textSecondary, width: cardWidth || undefined },
+                ]}>
+                <View style={[styles.statIcon, { backgroundColor: theme.backgroundElement }]}>
+                  <MaterialCommunityIcons name="plus" size={26} color={theme.accent} />
+                </View>
+                <ThemedText style={{ fontWeight: '700' }}>Add wallet</ThemedText>
+              </Pressable>
             </ScrollView>
-            {cards.length > 1 ? (
-              <View style={styles.dots}>
-                {cards.map((c, i) => (
-                  <View
-                    key={c.key}
-                    style={[
-                      styles.dot,
-                      { backgroundColor: i === page ? theme.accent : theme.textSecondary, opacity: i === page ? 1 : 0.35 },
-                    ]}
-                  />
-                ))}
-              </View>
-            ) : null}
+            <View style={styles.dots}>
+              {Array.from({ length: cards.length + 1 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    { backgroundColor: i === page ? theme.accent : theme.textSecondary, opacity: i === page ? 1 : 0.35 },
+                  ]}
+                />
+              ))}
+            </View>
           </View>
 
           <View style={styles.actions}>
@@ -249,6 +269,8 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
   cardLabel: { paddingRight: Spacing.five },
   heroAmount: { fontSize: 40, fontWeight: '700', lineHeight: 46 },
+  carouselCard: { marginTop: 0 },
+  addCard: { alignItems: 'center', justifyContent: 'center', gap: Spacing.three, borderWidth: 2, borderStyle: 'dashed', backgroundColor: 'transparent' },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.one, marginTop: Spacing.two },
   dot: { width: 7, height: 7, borderRadius: 4 },
   heroSplit: { flexDirection: 'row', gap: Spacing.four },
