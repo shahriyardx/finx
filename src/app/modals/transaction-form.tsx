@@ -6,12 +6,11 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
-import { useConfirm } from '@/components/confirm-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { db } from '@/db/client';
-import { addTransaction, deleteTransaction, updateTransaction } from '@/db/repo';
+import { addTransaction, updateTransaction } from '@/db/repo';
 import { transactions, wallets } from '@/db/schema';
 import { useTheme } from '@/hooks/use-theme';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/lib/categories';
@@ -24,7 +23,6 @@ export default function TransactionForm() {
   const theme = useTheme();
   const router = useRouter();
   const navigation = useNavigation();
-  const confirm = useConfirm();
   const params = useLocalSearchParams<{ walletId?: string; id?: string }>();
   const editId = params.id ? Number(params.id) : null;
   const { data: walletRows } = useLiveQuery(db.select().from(wallets));
@@ -93,14 +91,6 @@ export default function TransactionForm() {
       });
     }
     router.back();
-  };
-
-  const remove = async () => {
-    if (editId === null) return;
-    if (await confirm({ title: 'Delete transaction', message: 'This reverses its effect on the wallet balance.' })) {
-      await deleteTransaction(editId);
-      router.back();
-    }
   };
 
   const addReceipt = async (from: 'camera' | 'library') => {
@@ -256,15 +246,6 @@ export default function TransactionForm() {
           style={[styles.save, { backgroundColor: theme.accent, opacity: canSave ? 1 : 0.5 }]}>
           <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Save</ThemedText>
         </Pressable>
-
-        {editId !== null ? (
-          <Pressable onPress={remove} style={styles.delete}>
-            <MaterialCommunityIcons name="trash-can-outline" size={18} color={theme.expense} />
-            <ThemedText type="small" style={{ color: theme.expense, fontWeight: '600' }}>
-              Delete transaction
-            </ThemedText>
-          </Pressable>
-        ) : null}
       </ScrollView>
     </ThemedView>
   );
@@ -293,12 +274,4 @@ const styles = StyleSheet.create({
   },
   receiptThumb: { width: 64, height: 64, borderRadius: Spacing.two },
   receiptRemove: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
-  delete: {
-    marginTop: Spacing.three,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
-  },
 });

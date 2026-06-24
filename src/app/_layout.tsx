@@ -32,6 +32,7 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="wallet/[id]" options={{ headerShown: true, title: 'Wallet' }} />
+      <Stack.Screen name="transaction/[id]" options={{ headerShown: true, title: 'Transaction' }} />
       <Stack.Screen name="person/[id]" options={{ headerShown: true, title: 'Person' }} />
       <Stack.Screen name="debt/[id]" options={{ headerShown: true, title: 'Debt' }} />
       <Stack.Screen

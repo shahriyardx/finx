@@ -118,7 +118,7 @@ export default function Dashboard() {
                   note={t.note}
                   date={t.date}
                   hasReceipt={!!t.receipt}
-                  onPress={() => router.push(`/modals/transaction-form?id=${t.id}`)}
+                  onPress={() => router.push(`/transaction/${t.id}`)}
                 />
               ))}
             </ThemedView>

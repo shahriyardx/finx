@@ -136,7 +136,7 @@ export default function WalletDetail() {
                   note={item.row.note}
                   date={item.row.date}
                   hasReceipt={!!item.row.receipt}
-                  onPress={() => router.push(`/modals/transaction-form?id=${item.id}`)}
+                  onPress={() => router.push(`/transaction/${item.id}`)}
                 />
               ) : (
                 <TransferRow
