@@ -9,9 +9,10 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
-      backgroundColor={colors.background}
+      // Raised surface so the bar reads as a separate layer from the screen.
+      backgroundColor={colors.backgroundElement}
       shadowColor={colors.border}
-      indicatorColor={colors.backgroundElement}
+      indicatorColor={colors.background}
       labelStyle={{ selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
