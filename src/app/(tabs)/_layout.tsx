@@ -10,6 +10,7 @@ export default function TabsLayout() {
   return (
     <NativeTabs
       backgroundColor={colors.background}
+      shadowColor={colors.border}
       indicatorColor={colors.backgroundElement}
       labelStyle={{ selected: { color: colors.accent } }}>
       <NativeTabs.Trigger name="index">

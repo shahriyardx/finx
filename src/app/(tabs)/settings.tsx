@@ -1,6 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
@@ -230,6 +231,29 @@ export default function SettingsScreen() {
           <ThemedView type="backgroundElement" style={styles.card}>
             <Pressable
               style={styles.rowBetween}
+              onPress={() => WebBrowser.openBrowserAsync('https://shahriyar.dev')}>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="account-circle-outline" size={20} color={theme.text} />
+                <ThemedText type="default">Developer</ThemedText>
+              </View>
+              <View style={styles.dataRow}>
+                <ThemedText type="small" themeColor="textSecondary">
+                  Shahriyar
+                </ThemedText>
+                <MaterialCommunityIcons name="open-in-new" size={20} color={theme.textSecondary} />
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.rowBetween}
+              onPress={() => WebBrowser.openBrowserAsync('https://github.com/shahriyardx/finx')}>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="github" size={20} color={theme.text} />
+                <ThemedText type="default">Source code</ThemedText>
+              </View>
+              <MaterialCommunityIcons name="open-in-new" size={20} color={theme.textSecondary} />
+            </Pressable>
+            <Pressable
+              style={styles.rowBetween}
               onPress={() => WebBrowser.openBrowserAsync('https://shahriyar.dev/apps/finx/privacy')}>
               <View style={styles.dataRow}>
                 <MaterialCommunityIcons name="shield-lock-outline" size={20} color={theme.text} />
@@ -237,6 +261,15 @@ export default function SettingsScreen() {
               </View>
               <MaterialCommunityIcons name="open-in-new" size={20} color={theme.textSecondary} />
             </Pressable>
+            <View style={styles.rowBetween}>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="information-outline" size={20} color={theme.text} />
+                <ThemedText type="default">Version</ThemedText>
+              </View>
+              <ThemedText type="small" themeColor="textSecondary">
+                {Constants.expoConfig?.version ?? '—'}
+              </ThemedText>
+            </View>
           </ThemedView>
         </SafeAreaView>
       </ScrollView>
