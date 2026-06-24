@@ -1,8 +1,10 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { EmptyState } from '@/components/empty-state';
 import { Money } from '@/components/money';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -31,14 +33,19 @@ export default function WalletsScreen() {
             <Pressable
               onPress={() => router.push('/modals/wallet-form')}
               style={[styles.add, { backgroundColor: theme.accent }]}>
-              <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>+ Add</ThemedText>
+              <MaterialCommunityIcons name="plus" size={18} color={theme.onAccent} />
+              <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Add</ThemedText>
             </Pressable>
           </View>
 
           {list.length === 0 ? (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              No wallets yet. Add one to start tracking money.
-            </ThemedText>
+            <EmptyState
+              icon="wallet-plus"
+              title="No wallets yet"
+              message="Create your first wallet to start tracking your money, income and spending."
+              actionLabel="Add wallet"
+              onAction={() => router.push('/modals/wallet-form')}
+            />
           ) : (
             <View style={styles.list}>
               {list.map((w) => (
@@ -64,7 +71,14 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.three, paddingBottom: Spacing.six },
   body: { gap: Spacing.three },
   head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  add: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.three },
+  add: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.half,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.three,
+  },
   list: { gap: Spacing.two, marginTop: Spacing.two },
-  empty: { paddingVertical: Spacing.four, textAlign: 'center' },
 });

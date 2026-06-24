@@ -81,13 +81,13 @@ export default function Dashboard() {
             <Pressable
               style={[styles.action, { backgroundColor: theme.accent }]}
               onPress={() => router.push('/modals/transaction-form')}>
-              <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>
-                + Transaction
-              </ThemedText>
+              <MaterialCommunityIcons name="plus-circle" size={20} color={theme.onAccent} />
+              <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Transaction</ThemedText>
             </Pressable>
             <Pressable
               style={[styles.action, { backgroundColor: theme.backgroundElement }]}
               onPress={() => router.push('/(tabs)/wallets')}>
+              <MaterialCommunityIcons name="wallet" size={20} color={theme.text} />
               <ThemedText style={{ fontWeight: '700' }}>Wallets</ThemedText>
             </Pressable>
           </View>
@@ -159,7 +159,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(159,232,112,0.18)',
   },
   actions: { flexDirection: 'row', gap: Spacing.three },
-  action: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
+  action: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: Spacing.two,
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.two },
   sectionTitle: { fontSize: 24, lineHeight: 30 },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },

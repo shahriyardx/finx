@@ -214,4 +214,39 @@ export async function setSetting(key: string, value: string) {
     .onConflictDoUpdate({ target: settings.key, set: { value } });
 }
 
+// ----------------------------------------------------------------------------
+// Bulk reset
+// ----------------------------------------------------------------------------
+
+export type ResetSelection = {
+  wallets?: boolean;
+  people?: boolean;
+  debts?: boolean;
+  transactions?: boolean;
+};
+
+/**
+ * Permanently delete the selected data sets.
+ * - wallets       → wallets + their transactions (cascade); debt links nulled
+ * - people        → persons + their debts + payments (cascade)
+ * - debts         → all debts + payments (cascade)
+ * - transactions  → all transactions, and every remaining wallet balance reset to 0
+ */
+export async function resetData(sel: ResetSelection) {
+  // NOTE: a bare `DELETE FROM t` triggers SQLite's truncate optimization, which
+  // skips the row update-hook — so expo-sqlite's change listener never fires and
+  // useLiveQuery won't refresh until restart. An always-true WHERE forces
+  // per-row deletes and proper change notifications.
+  const all = sql`1 = 1`;
+  await db.transaction(async (tx) => {
+    if (sel.wallets) await tx.delete(wallets).where(all);
+    if (sel.people) await tx.delete(persons).where(all);
+    if (sel.debts) await tx.delete(debts).where(all);
+    if (sel.transactions) {
+      await tx.delete(transactions).where(all);
+      await tx.update(wallets).set({ balance: 0 });
+    }
+  });
+}
+
 export { and, eq, sql };

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/avatar';
+import { EmptyState } from '@/components/empty-state';
 import { Money } from '@/components/money';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -42,9 +43,13 @@ export default function PeopleScreen() {
           </View>
 
           {list.length === 0 ? (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-              Add people to track money you lend or borrow.
-            </ThemedText>
+            <EmptyState
+              icon="account-group"
+              title="No people yet"
+              message="Add people to track money you lend to or borrow from them."
+              actionLabel="Add person"
+              onAction={() => router.push('/modals/person-form')}
+            />
           ) : (
             <View style={styles.list}>
               {list.map((p) => {
@@ -85,5 +90,4 @@ const styles = StyleSheet.create({
   list: { gap: Spacing.two, marginTop: Spacing.two },
   row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, padding: Spacing.three, borderRadius: Spacing.three },
   middle: { flex: 1, gap: 2 },
-  empty: { paddingVertical: Spacing.four, textAlign: 'center' },
 });
