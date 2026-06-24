@@ -13,7 +13,7 @@ import { PeriodPicker } from '@/components/period-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TransactionRow } from '@/components/transaction-row';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { db } from '@/db/client';
 import { deleteTransaction } from '@/db/repo';
 import { transactions, wallets } from '@/db/schema';
@@ -83,7 +83,7 @@ export default function ActivityScreen() {
               <MaterialCommunityIcons name="chevron-left" size={24} color={theme.text} />
             </Pressable>
 
-            <Pressable onPress={() => setPickerOpen(true)} style={styles.navLabel}>
+            <Pressable onPress={() => setPickerOpen(true)} style={[styles.navLabel, styles.navLabelFill]}>
               <ThemedText type="default" style={{ fontWeight: '700' }}>
                 {periodLabel(gran, anchor)}
               </ThemedText>
@@ -96,6 +96,14 @@ export default function ActivityScreen() {
               hitSlop={10}
               style={[styles.navArrow, { backgroundColor: theme.backgroundElement, opacity: canStep ? 1 : 0.3 }]}>
               <MaterialCommunityIcons name="chevron-right" size={24} color={theme.text} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => setFilterOpen(true)}
+              hitSlop={10}
+              style={[styles.navArrow, { backgroundColor: theme.accent }]}>
+              <MaterialCommunityIcons name="filter-variant" size={22} color={theme.onAccent} />
+              {filter !== 'all' ? <View style={[styles.filterDot, { backgroundColor: theme.expense }]} /> : null}
             </Pressable>
           </View>
 
@@ -152,14 +160,6 @@ export default function ActivityScreen() {
         </SafeAreaView>
       </ScrollView>
 
-      {/* FAB: type filter */}
-      <Pressable
-        onPress={() => setFilterOpen(true)}
-        style={[styles.fab, { backgroundColor: theme.accent, bottom: BottomTabInset - Spacing.three }]}>
-        <MaterialCommunityIcons name="filter-variant" size={26} color={theme.onAccent} />
-        {filter !== 'all' ? <View style={[styles.fabDot, { backgroundColor: theme.expense }]} /> : null}
-      </Pressable>
-
       <PeriodPicker
         visible={pickerOpen}
         gran={gran}
@@ -210,27 +210,14 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: Spacing.three, paddingBottom: Spacing.six },
   body: { gap: Spacing.three },
-  nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  nav: { flexDirection: 'row', alignItems: 'center', gap: Spacing.one },
   navArrow: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   navLabel: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  navLabelFill: { flex: 1, justifyContent: 'center' },
+  filterDot: { position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: 4 },
   summary: { flexDirection: 'row', gap: Spacing.four },
   summaryCol: { gap: 2 },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
-  fab: {
-    position: 'absolute',
-    right: Spacing.three,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  fabDot: { position: 'absolute', top: 12, right: 12, width: 10, height: 10, borderRadius: 5 },
   menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: Spacing.five },
   menu: { borderRadius: Spacing.three, borderWidth: StyleSheet.hairlineWidth, padding: Spacing.three, gap: Spacing.one },
   menuTitle: { marginBottom: Spacing.one },
