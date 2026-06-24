@@ -1,71 +1,58 @@
 # FinX
 
-A local-only personal finance app for Android & iOS, built with Expo. All data
-stays on your device — no account, no backend.
+A simple money tracker for your phone. Keep an eye on what you earn, what you
+spend, and who owes you — all in one place.
 
-## Features
+**Everything stays on your phone.** No sign-up, no account, no cloud. Your money
+is your business.
 
-- **Wallets** with balances in a single app-wide currency (default BDT).
-- **Income & expense** tracking that updates wallet balances atomically.
-- **Lend / borrow** debts tied to people, optionally linked to a wallet, with
-  repayment tracking.
-- **Activity** view filterable by week / month / year / custom period.
-- **PIN lock** (4-digit) with optional **biometric unlock** and biometric-based
-  PIN recovery — recovery never wipes data.
-- **Import / export** all data as a plain JSON backup (Android saves to a folder
-  you pick; iOS uses the share sheet).
-- Contacts & photo integration, Wise-inspired green theme, native tabs.
+## What you can do
 
-## Tech stack
+- **Wallets** — Make a wallet for each place you keep money (cash, bank, mobile
+  wallet) and see the balance of each one.
+- **Income & expenses** — Log money coming in and going out. Your wallet balances
+  update on their own.
+- **Move money between wallets** — Shift money from one wallet to another in a
+  single tap, without it counting as income or spending.
+- **Lending & borrowing** — Keep track of money you lend to or borrow from
+  people, and tick it off as it gets paid back.
+- **Snap a receipt** — Attach a photo to any transaction, straight from your
+  camera or photo gallery, so you never lose a record.
+- **Automatic bank SMS** *(Android only)* — Let FinX read your bank and bKash
+  text messages and add the transactions for you. Works with **City Bank**,
+  **Standard Chartered**, and **bKash**. You choose which wallet each one feeds.
+- **See where your money goes** — Browse your activity by week, month, year, or
+  any date range you pick.
+- **Locked and private** — Open the app with a 4-digit PIN, or your fingerprint /
+  face. Forgot your PIN? Unlock with your fingerprint and set a new one — your
+  data is never wiped.
+- **Backup & restore** — Save all your data to a single file, and load it back
+  any time. Great for moving to a new phone.
 
-- **Expo SDK 56** (expo-router, React 19, React Native 0.85)
-- **Drizzle ORM** over `expo-sqlite` with generated migrations
-- `expo-secure-store` + `expo-local-authentication` for PIN/biometric auth
-- Amounts stored as integer minor units (cents) to avoid float drift
+## Get the app
 
-## Get started
+Grab the latest Android APK from the
+[Releases page](https://github.com/shahriyardx/finx/releases), download it to
+your phone, and tap to install.
 
-1. Install dependencies
+> You may need to allow "install from unknown sources" the first time — your
+> phone will guide you through it.
 
-   ```bash
-   bun install
-   ```
+## Set it up
 
-2. Start the app
+1. Open FinX and pick a 4-digit PIN.
+2. (Optional) Turn on fingerprint / face unlock in **Settings**.
+3. Add your first wallet and start logging money.
 
-   ```bash
-   npx expo start
-   ```
+That's it. No account to create, nothing to sign up for.
 
-   Open it in a development build, Android emulator, or iOS simulator.
+## A note on privacy
 
-## Database migrations
+FinX never sends your data anywhere. There's no server, no analytics, no
+tracking. The bank SMS feature reads messages only on your phone to fill in
+transactions — those messages never leave your device.
 
-Schema lives in `src/db/schema.ts`. After changing it, regenerate migrations:
+---
 
-```bash
-bun run db:generate
-```
-
-Migrations apply automatically at runtime via `useMigrations`.
-
-## Build a release APK (Android)
-
-```bash
-cd android && ./gradlew assembleRelease
-adb install -r android/app/build/outputs/apk/release/app-release.apk
-```
-
-Prebuilt APKs are attached to [GitHub Releases](https://github.com/shahriyardx/finx/releases).
-
-## Project layout
-
-```
-src/
-  app/        # expo-router routes: (auth), (tabs), modals, detail pages
-  auth/       # PIN/biometric auth context + secure storage
-  components/ # shared UI (pin pad, confirm dialog, empty state, ...)
-  db/         # Drizzle schema, client, repo (mutations + backup)
-  lib/        # backup, formatting, date-range, categories
-  constants/  # theme (Wise-style green palette)
-```
+*Built with [Expo](https://expo.dev). Developers: see
+[AGENTS.md](AGENTS.md) and the in-repo docs for the technical details.*
