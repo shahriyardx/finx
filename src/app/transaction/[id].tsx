@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: Spacing.three, gap: Spacing.three, paddingBottom: Spacing.six },
   amountBlock: { alignItems: 'center', gap: Spacing.one, paddingVertical: Spacing.three },
-  amount: { fontSize: 36, fontWeight: '800' },
+  amount: { fontSize: 36, lineHeight: 46, fontWeight: '800' },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three },
   field: {
     flexDirection: 'row',
