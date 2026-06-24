@@ -55,7 +55,7 @@ function TabItem({
 const TABS: Record<string, { label: string; icon: IconName; iconActive: IconName }> = {
   index: { label: 'Home', icon: 'home-outline', iconActive: 'home' },
   wallets: { label: 'Wallets', icon: 'wallet-outline', iconActive: 'wallet' },
-  activity: { label: 'Activity', icon: 'receipt-text-outline', iconActive: 'receipt-text' },
+  activity: { label: 'Activity', icon: 'swap-vertical', iconActive: 'swap-vertical-bold' },
   people: { label: 'People', icon: 'account-group-outline', iconActive: 'account-group' },
   settings: { label: 'Settings', icon: 'cog-outline', iconActive: 'cog' },
 };
