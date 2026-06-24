@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: Spacing.three, gap: Spacing.two },
   input: { borderRadius: Spacing.three, padding: Spacing.three, fontSize: 16, marginBottom: Spacing.two },
-  colors: { flexDirection: 'row', gap: Spacing.three, marginVertical: Spacing.two },
+  colors: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
   swatch: { width: 40, height: 40, borderRadius: 20 },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
   iconWrap: { borderRadius: 18, borderWidth: 3, borderColor: 'transparent', padding: 2 },
