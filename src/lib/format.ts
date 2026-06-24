@@ -12,6 +12,14 @@ export function formatMoney(minor: number, currency = 'BDT'): string {
   }
 }
 
+/** Format minor units as a grouped decimal number with no currency symbol. */
+export function formatAmount(minor: number): string {
+  return new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(minor / 100);
+}
+
 /** Parse a user-entered decimal string into integer minor units. */
 export function parseMoney(input: string): number {
   const n = Number(input.replace(/[^0-9.]/g, ''));

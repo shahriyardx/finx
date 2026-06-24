@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider } from '@/auth/auth-context';
+import { ConfirmProvider } from '@/components/confirm-dialog';
 import { LockOverlay } from '@/components/lock-overlay';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -81,9 +82,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.flex}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <AuthProvider>
-          <RootNavigator />
-          <LockOverlay />
-          <StatusBar style="auto" />
+          <ConfirmProvider>
+            <RootNavigator />
+            <LockOverlay />
+            <StatusBar style="auto" />
+          </ConfirmProvider>
         </AuthProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

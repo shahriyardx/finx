@@ -1,9 +1,10 @@
 import { desc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useConfirm } from '@/components/confirm-dialog';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TransactionRow } from '@/components/transaction-row';
@@ -17,6 +18,7 @@ type Filter = 'all' | 'income' | 'expense';
 
 export default function ActivityScreen() {
   const theme = useTheme();
+  const confirm = useConfirm();
   const [filter, setFilter] = useState<Filter>('all');
 
   const { data } = useLiveQuery(
@@ -37,11 +39,11 @@ export default function ActivityScreen() {
 
   const rows = (data ?? []).filter((t) => filter === 'all' || t.type === filter);
 
-  const confirmDelete = (id: number) =>
-    Alert.alert('Delete transaction', 'The wallet balance will be restored.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteTransaction(id) },
-    ]);
+  const confirmDelete = async (id: number) => {
+    if (await confirm({ title: 'Delete transaction', message: 'The wallet balance will be restored.' })) {
+      deleteTransaction(id);
+    }
+  };
 
   return (
     <ThemedView style={styles.container}>

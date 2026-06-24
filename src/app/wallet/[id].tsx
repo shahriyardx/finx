@@ -1,8 +1,9 @@
 import { desc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useConfirm } from '@/components/confirm-dialog';
 import { Money } from '@/components/money';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -16,6 +17,7 @@ import { useTheme } from '@/hooks/use-theme';
 export default function WalletDetail() {
   const theme = useTheme();
   const router = useRouter();
+  const confirm = useConfirm();
   const { id } = useLocalSearchParams<{ id: string }>();
   const walletId = Number(id);
 
@@ -29,18 +31,11 @@ export default function WalletDetail() {
   );
   const wallet = walletRows?.[0];
 
-  const confirmDelete = () => {
-    Alert.alert('Delete wallet', 'This also removes its transactions. Continue?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteWallet(walletId);
-          router.back();
-        },
-      },
-    ]);
+  const confirmDelete = async () => {
+    if (await confirm({ title: 'Delete wallet', message: 'This also removes its transactions.' })) {
+      await deleteWallet(walletId);
+      router.back();
+    }
   };
 
   if (!wallet) {

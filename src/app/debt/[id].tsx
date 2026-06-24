@@ -1,9 +1,10 @@
 import { desc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
+import { useConfirm } from '@/components/confirm-dialog';
 import { Money } from '@/components/money';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -17,6 +18,7 @@ import { formatDate } from '@/lib/format';
 export default function DebtDetail() {
   const theme = useTheme();
   const router = useRouter();
+  const confirm = useConfirm();
   const { id } = useLocalSearchParams<{ id: string }>();
   const debtId = Number(id);
 
@@ -33,24 +35,28 @@ export default function DebtDetail() {
   const walletName = (wid: number | null) =>
     wid == null ? 'No wallet' : (walletRows?.find((w) => w.id === wid)?.name ?? 'Wallet');
 
-  const confirmDeletePayment = (paymentId: number) =>
-    Alert.alert('Delete repayment', 'Outstanding will be restored and the wallet move reversed.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deletePayment(paymentId) },
-    ]);
+  const confirmDeletePayment = async (paymentId: number) => {
+    if (
+      await confirm({
+        title: 'Delete repayment',
+        message: 'Outstanding will be restored and the wallet move reversed.',
+      })
+    ) {
+      deletePayment(paymentId);
+    }
+  };
 
-  const confirmDelete = () =>
-    Alert.alert('Delete debt', 'Removes this debt and its payment records. Wallet balances are not reversed.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteDebt(debtId);
-          router.back();
-        },
-      },
-    ]);
+  const confirmDelete = async () => {
+    if (
+      await confirm({
+        title: 'Delete debt',
+        message: 'Removes this debt and its payment records. Wallet balances are not reversed.',
+      })
+    ) {
+      await deleteDebt(debtId);
+      router.back();
+    }
+  };
 
   if (!debt) {
     return (

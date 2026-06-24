@@ -1,9 +1,10 @@
 import { desc, eq } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
+import { useConfirm } from '@/components/confirm-dialog';
 import { Money } from '@/components/money';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -17,6 +18,7 @@ import { formatDate } from '@/lib/format';
 export default function PersonDetail() {
   const theme = useTheme();
   const router = useRouter();
+  const confirm = useConfirm();
   const { id } = useLocalSearchParams<{ id: string }>();
   const personId = Number(id);
 
@@ -34,18 +36,12 @@ export default function PersonDetail() {
     .filter((d) => d.status === 'open')
     .reduce((s, d) => s + (d.type === 'lend' ? d.outstanding : -d.outstanding), 0);
 
-  const confirmDeletePerson = () =>
-    Alert.alert('Delete person', 'Removes this person and all their debts. Continue?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deletePerson(personId);
-          router.back();
-        },
-      },
-    ]);
+  const confirmDeletePerson = async () => {
+    if (await confirm({ title: 'Delete person', message: 'Removes this person and all their debts.' })) {
+      await deletePerson(personId);
+      router.back();
+    }
+  };
 
   if (!person) {
     return (
