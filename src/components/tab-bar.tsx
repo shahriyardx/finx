@@ -70,8 +70,9 @@ const styles = StyleSheet.create({
   tab: { flex: 1, alignItems: 'center', gap: 2 },
   pill: {
     paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.four,
+    paddingVertical: Spacing.one,
+    borderRadius: 999,
+    overflow: 'hidden',
   },
   label: { fontSize: 11, lineHeight: 14 },
 });
