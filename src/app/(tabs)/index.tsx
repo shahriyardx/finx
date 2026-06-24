@@ -2,7 +2,8 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { desc, gte } from 'drizzle-orm';
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
 import { Link, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Money } from '@/components/money';
@@ -20,6 +21,31 @@ function monthStart(): number {
   return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
 }
 
+/** Pick readable text (dark forest vs white) for a card tinted with `hex`. */
+function readableText(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return '#ffffff';
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  // Relative luminance (sRGB) — bright cards get dark text.
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.6 ? Brand.forest : '#ffffff';
+}
+
+type Card = {
+  key: string;
+  label: string;
+  bg: string;
+  text: string;
+  accent: string; // muted label color
+  iconBg: string;
+  balance: number;
+  income: number;
+  spend: number;
+};
+
 export default function Dashboard() {
   const theme = useTheme();
   const router = useRouter();
@@ -36,45 +62,118 @@ export default function Dashboard() {
   const income = (monthTxns ?? []).filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const spend = (monthTxns ?? []).filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
 
+  const [cardWidth, setCardWidth] = useState(0);
+  const [page, setPage] = useState(0);
+
+  // Total card first, then one tinted card per wallet with its own month stats.
+  const cards = useMemo<Card[]>(() => {
+    const perWallet = new Map<number, { income: number; spend: number }>();
+    for (const t of monthTxns ?? []) {
+      const s = perWallet.get(t.walletId) ?? { income: 0, spend: 0 };
+      if (t.type === 'income') s.income += t.amount;
+      else s.spend += t.amount;
+      perWallet.set(t.walletId, s);
+    }
+    const totalCard: Card = {
+      key: 'total',
+      label: 'Total balance',
+      bg: theme.hero,
+      text: theme.heroText,
+      accent: theme.heroAccent,
+      iconBg: 'rgba(159,232,112,0.18)',
+      balance: total,
+      income,
+      spend,
+    };
+    const walletCards: Card[] = (walletRows ?? []).map((w) => {
+      const s = perWallet.get(w.id) ?? { income: 0, spend: 0 };
+      const text = readableText(w.color);
+      const onWhite = text === '#ffffff';
+      return {
+        key: `w${w.id}`,
+        label: w.name,
+        bg: w.color,
+        text,
+        accent: onWhite ? 'rgba(255,255,255,0.85)' : 'rgba(22,51,0,0.7)',
+        iconBg: onWhite ? 'rgba(255,255,255,0.2)' : 'rgba(22,51,0,0.12)',
+        balance: w.balance,
+        income: s.income,
+        spend: s.spend,
+      };
+    });
+    return [totalCard, ...walletCards];
+  }, [walletRows, monthTxns, total, income, spend, theme.hero, theme.heroText, theme.heroAccent]);
+
+  const onCarouselLayout = (e: LayoutChangeEvent) => setCardWidth(e.nativeEvent.layout.width);
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (cardWidth > 0) setPage(Math.round(e.nativeEvent.contentOffset.x / cardWidth));
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <SafeAreaView edges={['top']} style={styles.body}>
-          {/* Forest-green hero card */}
-          <View style={[styles.hero, { backgroundColor: theme.hero }]}>
-            <View style={[styles.badge, { backgroundColor: theme.heroAccent }]}>
-              <ThemedText style={[styles.badgeText, { color: theme.hero }]}>{currency}</ThemedText>
-            </View>
-            <View style={styles.heroCol}>
-              <ThemedText type="small" style={{ color: theme.heroAccent }}>
-                Total balance
-              </ThemedText>
-              <Money value={total} plain themeColor="heroText" style={styles.heroAmount} />
-            </View>
-            <View style={styles.heroSplit}>
-              <View style={styles.heroStat}>
-                <View style={styles.statIcon}>
-                  <MaterialCommunityIcons name="arrow-bottom-left" size={22} color={Brand.lime} />
+          {/* Swipable balance cards: Total + per-wallet */}
+          <View onLayout={onCarouselLayout}>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={onScroll}
+              scrollEventThrottle={16}>
+              {cards.map((c) => (
+                <View key={c.key} style={[styles.hero, { backgroundColor: c.bg, width: cardWidth || undefined }]}>
+                  {c.key === 'total' ? (
+                    <View style={[styles.badge, { backgroundColor: theme.heroAccent }]}>
+                      <ThemedText style={[styles.badgeText, { color: theme.hero }]}>{currency}</ThemedText>
+                    </View>
+                  ) : null}
+                  <View style={styles.heroCol}>
+                    <ThemedText type="small" numberOfLines={1} style={[styles.cardLabel, { color: c.accent }]}>
+                      {c.label}
+                    </ThemedText>
+                    <Money value={c.balance} plain style={[styles.heroAmount, { color: c.text }]} />
+                  </View>
+                  <View style={styles.heroSplit}>
+                    <View style={styles.heroStat}>
+                      <View style={[styles.statIcon, { backgroundColor: c.iconBg }]}>
+                        <MaterialCommunityIcons name="arrow-bottom-left" size={22} color={c.text} />
+                      </View>
+                      <View style={styles.heroCol}>
+                        <ThemedText type="small" style={{ color: c.accent }}>
+                          Income
+                        </ThemedText>
+                        <Money value={c.income} plain style={{ color: c.text }} type="smallBold" />
+                      </View>
+                    </View>
+                    <View style={styles.heroStat}>
+                      <View style={[styles.statIcon, { backgroundColor: c.iconBg }]}>
+                        <MaterialCommunityIcons name="arrow-top-right" size={22} color={c.text} />
+                      </View>
+                      <View style={styles.heroCol}>
+                        <ThemedText type="small" style={{ color: c.accent }}>
+                          Spent
+                        </ThemedText>
+                        <Money value={c.spend} plain style={{ color: c.text }} type="smallBold" />
+                      </View>
+                    </View>
+                  </View>
                 </View>
-                <View style={styles.heroCol}>
-                  <ThemedText type="small" style={{ color: Brand.lime }}>
-                    Income
-                  </ThemedText>
-                  <Money value={income} plain style={{ color: theme.heroText }} type="smallBold" />
-                </View>
+              ))}
+            </ScrollView>
+            {cards.length > 1 ? (
+              <View style={styles.dots}>
+                {cards.map((c, i) => (
+                  <View
+                    key={c.key}
+                    style={[
+                      styles.dot,
+                      { backgroundColor: i === page ? theme.accent : theme.textSecondary, opacity: i === page ? 1 : 0.35 },
+                    ]}
+                  />
+                ))}
               </View>
-              <View style={styles.heroStat}>
-                <View style={styles.statIcon}>
-                  <MaterialCommunityIcons name="arrow-top-right" size={22} color={Brand.lime} />
-                </View>
-                <View style={styles.heroCol}>
-                  <ThemedText type="small" style={{ color: Brand.lime }}>
-                    Spent
-                  </ThemedText>
-                  <Money value={spend} plain style={{ color: theme.heroText }} type="smallBold" />
-                </View>
-              </View>
-            </View>
+            ) : null}
           </View>
 
           <View style={styles.actions}>
@@ -148,7 +247,10 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.four,
   },
   badgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  cardLabel: { paddingRight: Spacing.five },
   heroAmount: { fontSize: 40, fontWeight: '700', lineHeight: 46 },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.one, marginTop: Spacing.two },
+  dot: { width: 7, height: 7, borderRadius: 4 },
   heroSplit: { flexDirection: 'row', gap: Spacing.four },
   heroStat: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
   heroCol: { gap: 2 },
