@@ -27,6 +27,7 @@ export const transactions = sqliteTable('transactions', {
   category: text('category').notNull().default('other'),
   note: text('note'),
   receipt: text('receipt'), // local file uri of an attached receipt photo, optional
+  smsBody: text('sms_body'), // raw bank SMS this tx was auto-imported from, optional
   date: integer('date').notNull(),
   createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
 })

@@ -26,6 +26,11 @@ export async function setPin(pin: string): Promise<void> {
   await SecureStore.setItemAsync(PIN_HASH, digest)
 }
 
+export async function clearPin(): Promise<void> {
+  await SecureStore.deleteItemAsync(PIN_HASH)
+  await SecureStore.deleteItemAsync(PIN_SALT)
+}
+
 export async function verifyPin(pin: string): Promise<boolean> {
   const salt = await SecureStore.getItemAsync(PIN_SALT)
   const stored = await SecureStore.getItemAsync(PIN_HASH)

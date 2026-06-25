@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Pressable, StyleSheet } from 'react-native'
 
 import { useAuth } from '@/auth/auth-context'
-import { setPin, verifyPin } from '@/auth/secure'
+import { verifyPin } from '@/auth/secure'
 import { PinPad } from '@/components/pin-pad'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
@@ -12,8 +12,9 @@ type Step = 'current' | 'new' | 'confirm'
 
 export default function ChangePin() {
   const router = useRouter()
-  const { authenticateBiometric, biometricAvailable } = useAuth()
-  const [step, setStep] = useState<Step>('current')
+  const { authenticateBiometric, biometricAvailable, pinSet, setupPin } = useAuth()
+  // No PIN yet → this screen sets one; skip the "current PIN" step.
+  const [step, setStep] = useState<Step>(pinSet ? 'current' : 'new')
   const [next, setNext] = useState<string | null>(null)
 
   const handle = async (pin: string) => {
@@ -34,7 +35,7 @@ export default function ChangePin() {
       setStep('new')
       return false
     }
-    await setPin(pin)
+    await setupPin(pin)
     router.back()
   }
 

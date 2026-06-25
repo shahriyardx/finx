@@ -2,7 +2,7 @@ import * as LocalAuthentication from 'expo-local-authentication'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
 
-import { hasPin, isBiometricEnabled, setBiometricEnabled, setPin, verifyPin } from '@/auth/secure'
+import { clearPin, hasPin, isBiometricEnabled, setBiometricEnabled, setPin, verifyPin } from '@/auth/secure'
 
 type Status = 'loading' | 'needsSetup' | 'locked' | 'unlocked'
 
@@ -11,9 +11,11 @@ const GRACE_MS = 5 * 60 * 1000
 
 type AuthContextValue = {
   status: Status
+  pinSet: boolean
   biometricEnabled: boolean
   biometricAvailable: boolean
   setupPin: (pin: string) => Promise<void>
+  removePin: () => Promise<void>
   unlockWithPin: (pin: string) => Promise<boolean>
   unlockWithBiometric: () => Promise<boolean>
   authenticateBiometric: () => Promise<boolean>
@@ -26,10 +28,17 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading')
+  const [pinSet, setPinSetState] = useState(false)
   const [biometricEnabled, setBiometricState] = useState(false)
   const [biometricAvailable, setBiometricAvailable] = useState(false)
   const wasUnlocked = useRef(false)
+  const pinSetRef = useRef(false)
   const backgroundedAt = useRef<number | null>(null)
+
+  const setPinSet = useCallback((v: boolean) => {
+    pinSetRef.current = v
+    setPinSetState(v)
+  }, [])
 
   // Bootstrap: figure out initial lock state + biometric availability.
   useEffect(() => {
@@ -42,9 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ])
       setBiometricState(bioEnabled)
       setBiometricAvailable(hardware && enrolled)
-      setStatus(pinSet ? 'locked' : 'needsSetup')
+      setPinSet(pinSet)
+      // No PIN set → app opens unlocked. PIN is opt-in from Settings.
+      setStatus(pinSet ? 'locked' : 'unlocked')
     })()
-  }, [])
+  }, [setPinSet])
 
   // Track unlocked state for the AppState re-lock check.
   useEffect(() => {
@@ -62,7 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (next === 'active') {
         const since = backgroundedAt.current
         backgroundedAt.current = null
-        if (wasUnlocked.current && since !== null && Date.now() - since >= GRACE_MS) {
+        // Only re-lock when a PIN is actually set; otherwise there is nothing to unlock with.
+        if (pinSetRef.current && wasUnlocked.current && since !== null && Date.now() - since >= GRACE_MS) {
           setStatus('locked')
         }
       }
@@ -70,10 +82,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.remove()
   }, [])
 
-  const setupPin = useCallback(async (pin: string) => {
-    await setPin(pin)
+  const setupPin = useCallback(
+    async (pin: string) => {
+      await setPin(pin)
+      setPinSet(true)
+      setStatus('unlocked')
+    },
+    [setPinSet],
+  )
+
+  const removePin = useCallback(async () => {
+    await clearPin()
+    await setBiometricEnabled(false)
+    setBiometricState(false)
+    setPinSet(false)
     setStatus('unlocked')
-  }, [])
+  }, [setPinSet])
 
   const unlockWithPin = useCallback(async (pin: string) => {
     const ok = await verifyPin(pin)
@@ -118,9 +142,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         status,
+        pinSet,
         biometricEnabled,
         biometricAvailable,
         setupPin,
+        removePin,
         unlockWithPin,
         unlockWithBiometric,
         authenticateBiometric,

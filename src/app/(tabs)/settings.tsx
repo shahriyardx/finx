@@ -13,6 +13,7 @@ import { useConfirm } from '@/components/confirm-dialog'
 import { SMS_IMPORT_KEY } from '@/components/sms-importer'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
+import { Button } from '@/components/ui/button'
 import { Spacing } from '@/constants/theme'
 import { db } from '@/db/client'
 import { importData, type ResetSelection, resetData, setSetting } from '@/db/repo'
@@ -35,7 +36,7 @@ export default function SettingsScreen() {
   const router = useRouter()
   const confirm = useConfirm()
   const currency = useCurrency()
-  const { biometricEnabled, biometricAvailable, enableBiometric, lock } = useAuth()
+  const { pinSet, biometricEnabled, biometricAvailable, enableBiometric, removePin } = useAuth()
   const [resetOpen, setResetOpen] = useState(false)
   const [sel, setSel] = useState<ResetSelection>({})
 
@@ -62,6 +63,16 @@ export default function SettingsScreen() {
     }
     await resetData(chosen)
     setSel({})
+  }
+
+  const doRemovePin = async () => {
+    const ok = await confirm({
+      title: 'Remove PIN?',
+      message: 'FinX will open without a PIN. Biometric unlock will also be turned off.',
+      confirmLabel: 'Remove',
+    })
+    if (!ok) return
+    await removePin()
   }
 
   const doExport = async () => {
@@ -139,37 +150,49 @@ export default function SettingsScreen() {
           </View>
 
           <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
-            Security
+            PIN
+          </ThemedText>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {pinSet ? 'A PIN is required to open FinX.' : 'FinX opens without a PIN. Set one to lock the app.'}
+            </ThemedText>
+
+            {pinSet ? (
+              <View style={styles.btnRow}>
+                <Button variant="outline" fill label="Change PIN" onPress={() => router.push('/modals/change-pin')} />
+                <Button variant="danger" fill label="Remove PIN" onPress={doRemovePin} />
+              </View>
+            ) : (
+              <Button
+                variant="primary"
+                label="Set PIN"
+                style={{ marginTop: Spacing.one }}
+                onPress={() => router.push('/modals/change-pin')}
+              />
+            )}
+          </ThemedView>
+
+          <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+            Biometric
           </ThemedText>
           <ThemedView type="backgroundElement" style={styles.card}>
             <View style={styles.rowBetween}>
               <View style={styles.flex}>
                 <ThemedText type="default">Biometric unlock</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {biometricAvailable ? 'Use fingerprint / Face ID' : 'Not available on this device'}
+                  {!biometricAvailable
+                    ? 'Not available on this device'
+                    : pinSet
+                      ? 'Use fingerprint / Face ID'
+                      : 'Set a PIN first'}
                 </ThemedText>
               </View>
               <Switch
                 value={biometricEnabled}
-                disabled={!biometricAvailable}
+                disabled={!biometricAvailable || !pinSet}
                 onValueChange={enableBiometric}
                 trackColor={{ true: theme.accent }}
               />
-            </View>
-
-            <View style={styles.btnRow}>
-              <Pressable
-                style={[styles.secBtn, { backgroundColor: theme.background }]}
-                onPress={() => router.push('/modals/change-pin')}>
-                <ThemedText type="default" style={{ fontWeight: '600' }}>
-                  Change PIN
-                </ThemedText>
-              </Pressable>
-              <Pressable style={[styles.secBtn, { backgroundColor: theme.accent }]} onPress={lock}>
-                <ThemedText type="default" style={{ color: theme.onAccent, fontWeight: '700' }}>
-                  Lock now
-                </ThemedText>
-              </Pressable>
             </View>
           </ThemedView>
 
@@ -338,7 +361,6 @@ const styles = StyleSheet.create({
   },
   dataRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   btnRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
-  secBtn: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
   flex: { flex: 1, gap: 2 },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   sheet: {

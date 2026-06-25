@@ -52,6 +52,7 @@ export function SmsImporter() {
             amount: parsed.amount,
             category: 'other',
             note: parsed.note,
+            smsBody: body,
           })
         })()
       })

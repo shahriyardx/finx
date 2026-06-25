@@ -55,6 +55,7 @@ export async function addTransaction(input: {
   category?: string
   note?: string
   receipt?: string | null
+  smsBody?: string | null
   date?: number
 }) {
   const delta = input.type === 'income' ? input.amount : -input.amount
@@ -66,6 +67,7 @@ export async function addTransaction(input: {
       category: input.category ?? 'other',
       note: input.note,
       receipt: input.receipt ?? null,
+      smsBody: input.smsBody ?? null,
       date: input.date ?? now(),
       createdAt: now(),
     })

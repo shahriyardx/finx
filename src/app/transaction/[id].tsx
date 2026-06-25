@@ -75,6 +75,19 @@ export default function TransactionDetail() {
           {tx.note?.trim() ? <Field label="Note" value={tx.note.trim()} /> : null}
         </ThemedView>
 
+        {tx.smsBody?.trim() ? (
+          <>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.receiptLabel}>
+              Original SMS
+            </ThemedText>
+            <ThemedView type="backgroundElement" style={styles.smsCard}>
+              <ThemedText type="small" style={styles.smsText}>
+                {tx.smsBody.trim()}
+              </ThemedText>
+            </ThemedView>
+          </>
+        ) : null}
+
         {tx.receipt ? (
           <>
             <ThemedText type="small" themeColor="textSecondary" style={styles.receiptLabel}>
@@ -132,6 +145,8 @@ const styles = StyleSheet.create({
   },
   fieldValue: { flexShrink: 1, textAlign: 'right' },
   receiptLabel: { marginTop: Spacing.one },
+  smsCard: { borderRadius: Spacing.three, padding: Spacing.three },
+  smsText: { lineHeight: 20 },
   receipt: { width: '100%', height: 220, borderRadius: Spacing.three },
   editBtn: {
     marginTop: Spacing.two,
