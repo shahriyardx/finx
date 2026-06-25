@@ -86,7 +86,10 @@ export default function PersonForm() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: editId ? 'Edit person' : 'New person' }} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
         <View style={styles.avatarRow}>
           <Pressable onPress={pick}>
             <Avatar name={name || '?'} uri={avatar} size={88} />

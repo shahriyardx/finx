@@ -51,7 +51,10 @@ export default function PaymentForm() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
         <View style={[styles.summary, { backgroundColor: theme.backgroundElement }]}>
           <ThemedText type="small" themeColor="textSecondary">
             {debt.type === 'lend' ? 'They owe you' : 'You owe'}

@@ -85,7 +85,10 @@ export default function TransferForm() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
         <ThemedText type="small" themeColor="textSecondary">
           Amount
         </ThemedText>

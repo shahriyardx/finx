@@ -9,6 +9,32 @@ export const GRANS: { key: Gran; label: string }[] = [
 
 const MS_DAY = 86400000
 
+/** Epoch ms of midnight (local) for the day containing `epochMs`. */
+export function dayStart(epochMs: number): number {
+  const d = new Date(epochMs)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+/** Human day header: Today / Yesterday / "Monday, 22 Jun". */
+export function dayLabel(dayStartMs: number, todayStartMs: number): string {
+  if (dayStartMs === todayStartMs) return 'Today'
+  if (dayStartMs === todayStartMs - MS_DAY) return 'Yesterday'
+  return new Date(dayStartMs).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })
+}
+
+/** Group date-bearing rows into [dayStart, rows][] sorted newest-first. */
+export function groupByDay<T extends { date: number }>(rows: T[]): [number, T[]][] {
+  const map = new Map<number, T[]>()
+  for (const t of rows) {
+    const key = dayStart(t.date)
+    const arr = map.get(key)
+    if (arr) arr.push(t)
+    else map.set(key, [t])
+  }
+  return [...map.entries()].sort((a, b) => b[0] - a[0])
+}
+
 /** Inclusive start, exclusive end (epoch ms) for the period containing `anchor`. */
 export function bounds(gran: Gran, anchor: Date): { start: number; end: number } {
   const y = anchor.getFullYear()

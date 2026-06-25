@@ -31,7 +31,7 @@ export default function PeopleScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <SafeAreaView edges={['top']} style={styles.body}>
           <View style={styles.head}>
             <ThemedText type="subtitle">People</ThemedText>

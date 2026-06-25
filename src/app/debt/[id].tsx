@@ -73,7 +73,7 @@ export default function DebtDetail() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: isLend ? 'Lent' : 'Borrowed' }} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={[styles.hero, { backgroundColor: theme.hero }]}>
           {person ? (
             <View style={styles.heroTop}>

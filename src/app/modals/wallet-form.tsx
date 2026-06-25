@@ -74,7 +74,10 @@ export default function WalletFormScreen() {
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{ title: editId ? 'Edit wallet' : 'New wallet' }} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
         <ThemedText type="small" themeColor="textSecondary">
           Name
         </ThemedText>

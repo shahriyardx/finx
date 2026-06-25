@@ -114,7 +114,7 @@ export default function SettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <SafeAreaView edges={['top']}>
           <ThemedText type="subtitle">Settings</ThemedText>
 

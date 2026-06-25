@@ -23,6 +23,7 @@ import { db } from '@/db/client'
 import { transactions, wallets } from '@/db/schema'
 import { useCurrency } from '@/hooks/use-currency'
 import { useTheme } from '@/hooks/use-theme'
+import { dayLabel, dayStart, groupByDay } from '@/lib/date-range'
 
 function monthStart(): number {
   const d = new Date()
@@ -66,6 +67,9 @@ export default function Dashboard() {
   const total = (walletRows ?? []).reduce((s, w) => s + w.balance, 0)
   const income = (monthTxns ?? []).filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const spend = (monthTxns ?? []).filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+
+  const todayStart = useMemo(() => dayStart(Date.now()), [])
+  const recentGroups = useMemo(() => groupByDay(recent ?? []), [recent])
 
   const [cardWidth, setCardWidth] = useState(0)
   const [page, setPage] = useState(0)
@@ -120,7 +124,7 @@ export default function Dashboard() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <SafeAreaView edges={['top']} style={styles.body}>
           {/* Swipable balance cards: Total + per-wallet */}
           <View onLayout={onCarouselLayout}>
@@ -240,20 +244,27 @@ export default function Dashboard() {
               No transactions yet. Add your first one above.
             </ThemedText>
           ) : (
-            <ThemedView type="backgroundElement" style={styles.card}>
-              {(recent ?? []).map((t) => (
-                <TransactionRow
-                  key={t.id}
-                  type={t.type}
-                  amount={t.amount}
-                  category={t.category}
-                  note={t.note}
-                  date={t.date}
-                  hasReceipt={!!t.receipt}
-                  onPress={() => router.push(`/transaction/${t.id}`)}
-                />
-              ))}
-            </ThemedView>
+            recentGroups.map(([day, items]) => (
+              <View key={day} style={styles.group}>
+                <ThemedText type="small" themeColor="textSecondary" style={styles.groupLabel}>
+                  {dayLabel(day, todayStart)}
+                </ThemedText>
+                <ThemedView type="backgroundElement" style={styles.card}>
+                  {items.map((t) => (
+                    <TransactionRow
+                      key={t.id}
+                      type={t.type}
+                      amount={t.amount}
+                      category={t.category}
+                      note={t.note}
+                      date={t.date}
+                      hasReceipt={!!t.receipt}
+                      onPress={() => router.push(`/transaction/${t.id}`)}
+                    />
+                  ))}
+                </ThemedView>
+              </View>
+            ))
           )}
         </SafeAreaView>
       </ScrollView>
@@ -317,5 +328,7 @@ const styles = StyleSheet.create({
   sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.two },
   sectionTitle: { fontSize: 24, lineHeight: 30 },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
+  group: { gap: Spacing.one },
+  groupLabel: { marginLeft: Spacing.one },
   empty: { paddingVertical: Spacing.four, textAlign: 'center' },
 })

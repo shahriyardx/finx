@@ -118,7 +118,10 @@ export default function TransactionForm() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
         {/* income / expense toggle */}
         <View style={[styles.segment, { backgroundColor: theme.backgroundElement }]}>
           {(['expense', 'income'] as Type[]).map((t) => (

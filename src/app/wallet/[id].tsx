@@ -2,11 +2,12 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { desc, eq, or } from 'drizzle-orm'
 import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
 import { useConfirm } from '@/components/confirm-dialog'
 import { Money } from '@/components/money'
+import { PeriodPicker } from '@/components/period-picker'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { TransactionRow } from '@/components/transaction-row'
@@ -16,6 +17,7 @@ import { db } from '@/db/client'
 import { deleteWallet } from '@/db/repo'
 import { transactions, transfers, wallets } from '@/db/schema'
 import { useTheme } from '@/hooks/use-theme'
+import { bounds, type Gran, periodLabel } from '@/lib/date-range'
 
 export default function WalletDetail() {
   const theme = useTheme()
@@ -39,6 +41,11 @@ export default function WalletDetail() {
   )
   const { data: allWallets } = useLiveQuery(db.select().from(wallets))
   const wallet = walletRows?.[0]
+
+  const now = useMemo(() => new Date(), [])
+  const [gran, setGran] = useState<Gran>('month')
+  const [anchor, setAnchor] = useState<Date>(now)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   // Merge transactions + transfers into one date-sorted ledger for this wallet.
   const ledger = useMemo(() => {
@@ -72,6 +79,11 @@ export default function WalletDetail() {
     return items.sort((a, b) => b.date - a.date)
   }, [txns, xfers, allWallets, walletId])
 
+  const periodLedger = useMemo(() => {
+    const { start, end } = bounds(gran, anchor)
+    return ledger.filter((i) => i.date >= start && i.date < end)
+  }, [ledger, gran, anchor])
+
   const confirmDelete = async () => {
     if (await confirm({ title: 'Delete wallet', message: 'This also removes its transactions and transfers.' })) {
       await deleteWallet(walletId)
@@ -99,7 +111,7 @@ export default function WalletDetail() {
           ),
         }}
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={[styles.hero, { backgroundColor: theme.hero }]}>
           <ThemedText type="small" style={{ color: theme.heroAccent }}>
             Balance
@@ -120,16 +132,24 @@ export default function WalletDetail() {
           </Pressable>
         </View>
 
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
-          Activity
-        </ThemedText>
-        {ledger.length === 0 ? (
+        <View style={styles.sectionHead}>
+          <ThemedText type="subtitle" style={styles.sectionTitle}>
+            Activity
+          </ThemedText>
+          <Pressable onPress={() => setPickerOpen(true)} style={styles.period} hitSlop={8}>
+            <ThemedText type="default" style={{ fontWeight: '700' }}>
+              {periodLabel(gran, anchor)}
+            </ThemedText>
+            <MaterialCommunityIcons name="menu-down" size={18} color={theme.textSecondary} />
+          </Pressable>
+        </View>
+        {periodLedger.length === 0 ? (
           <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
-            No transactions in this wallet yet.
+            No activity in this period.
           </ThemedText>
         ) : (
           <ThemedView type="backgroundElement" style={styles.card}>
-            {ledger.map((item) =>
+            {periodLedger.map((item) =>
               item.kind === 'tx' ? (
                 <TransactionRow
                   key={`tx-${item.id}`}
@@ -161,6 +181,18 @@ export default function WalletDetail() {
           </ThemedText>
         </Pressable>
       </ScrollView>
+
+      <PeriodPicker
+        visible={pickerOpen}
+        gran={gran}
+        anchor={anchor}
+        now={now}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(g, a) => {
+          setGran(g)
+          setAnchor(a)
+        }}
+      />
     </ThemedView>
   )
 }
@@ -172,7 +204,9 @@ const styles = StyleSheet.create({
   heroAmount: { fontSize: 36, fontWeight: '700', lineHeight: 42 },
   actions: { flexDirection: 'row', gap: Spacing.three },
   action: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
-  sectionTitle: { fontSize: 24, lineHeight: 30, marginTop: Spacing.two },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing.two },
+  sectionTitle: { fontSize: 24, lineHeight: 30 },
+  period: { flexDirection: 'row', alignItems: 'center', gap: 1 },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
   empty: { paddingVertical: Spacing.four, textAlign: 'center' },
   deleteBtn: { alignItems: 'center', paddingVertical: Spacing.three },

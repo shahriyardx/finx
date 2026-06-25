@@ -60,7 +60,7 @@ export default function TransactionDetail() {
           ),
         }}
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.amountBlock}>
           <Money value={signed} signed showPlus style={styles.amount} />
           <ThemedText type="small" themeColor="textSecondary">

@@ -61,7 +61,7 @@ export default function PersonDetail() {
           ),
         }}
       />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={[styles.hero, { backgroundColor: theme.hero }]}>
           <View style={styles.heroTop}>
             <Avatar name={person.name} uri={person.avatar} size={56} />

@@ -64,7 +64,10 @@ export default function DebtForm() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
         {lockedPerson ? (
           <View style={[styles.personHeader, { backgroundColor: theme.backgroundElement }]}>
             <Avatar name={lockedPerson.name} uri={lockedPerson.avatar} size={52} />

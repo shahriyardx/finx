@@ -23,7 +23,7 @@ export default function WalletsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <SafeAreaView edges={['top']} style={styles.body}>
           <View style={styles.head}>
             <View>
