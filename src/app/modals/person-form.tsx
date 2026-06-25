@@ -1,85 +1,87 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { eq } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import * as Contacts from 'expo-contacts/legacy';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { eq } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import * as Contacts from 'expo-contacts/legacy'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useEffect, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 
-import { Avatar } from '@/components/avatar';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { createPerson, updatePerson } from '@/db/repo';
-import { persons } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
-import { pickAvatar } from '@/lib/avatar';
+import { Avatar } from '@/components/avatar'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { createPerson, updatePerson } from '@/db/repo'
+import { persons } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
+import { pickAvatar } from '@/lib/avatar'
 
 export default function PersonForm() {
-  const theme = useTheme();
-  const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string }>();
-  const editId = params.id ? Number(params.id) : null;
+  const theme = useTheme()
+  const router = useRouter()
+  const params = useLocalSearchParams<{ id?: string }>()
+  const editId = params.id ? Number(params.id) : null
 
   const { data } = useLiveQuery(
-    editId ? db.select().from(persons).where(eq(persons.id, editId)) : db.select().from(persons).where(eq(persons.id, -1)),
+    editId
+      ? db.select().from(persons).where(eq(persons.id, editId))
+      : db.select().from(persons).where(eq(persons.id, -1)),
     [editId],
-  );
+  )
 
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [note, setNote] = useState('');
-  const [avatar, setAvatar] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [note, setNote] = useState('')
+  const [avatar, setAvatar] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   // Prefill once when editing.
   useEffect(() => {
     if (editId && !loaded && data?.[0]) {
-      const p = data[0];
+      const p = data[0]
       /* eslint-disable react-hooks/set-state-in-effect */
-      setName(p.name);
-      setPhone(p.phone ?? '');
-      setNote(p.note ?? '');
-      setAvatar(p.avatar ?? null);
-      setLoaded(true);
+      setName(p.name)
+      setPhone(p.phone ?? '')
+      setNote(p.note ?? '')
+      setAvatar(p.avatar ?? null)
+      setLoaded(true)
       /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [editId, loaded, data]);
+  }, [editId, loaded, data])
 
-  const canSave = name.trim().length > 0 && !saving;
+  const canSave = name.trim().length > 0 && !saving
 
   const save = async () => {
-    if (!canSave) return;
-    setSaving(true);
+    if (!canSave) return
+    setSaving(true)
     const fields = {
       name: name.trim(),
       phone: phone.trim() || null,
       note: note.trim() || null,
       avatar,
-    };
-    if (editId) await updatePerson(editId, fields);
-    else await createPerson(fields);
-    router.back();
-  };
+    }
+    if (editId) await updatePerson(editId, fields)
+    else await createPerson(fields)
+    router.back()
+  }
 
   const pick = async () => {
-    const uri = await pickAvatar();
-    if (uri) setAvatar(uri);
-  };
+    const uri = await pickAvatar()
+    if (uri) setAvatar(uri)
+  }
 
   const pickFromContacts = async () => {
-    const perm = await Contacts.requestPermissionsAsync();
-    if (!perm.granted) return;
-    const contact = await Contacts.presentContactPickerAsync();
-    if (!contact) return;
-    const num = contact.phoneNumbers?.[0]?.number;
-    if (num) setPhone(num);
-    if (!name.trim() && contact.name) setName(contact.name);
-  };
+    const perm = await Contacts.requestPermissionsAsync()
+    if (!perm.granted) return
+    const contact = await Contacts.presentContactPickerAsync()
+    if (!contact) return
+    const num = contact.phoneNumbers?.[0]?.number
+    if (num) setPhone(num)
+    if (!name.trim() && contact.name) setName(contact.name)
+  }
 
-  const inputStyle = [styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }];
+  const inputStyle = [styles.input, { color: theme.text, backgroundColor: theme.backgroundElement }]
 
   return (
     <ThemedView style={styles.container}>
@@ -146,7 +148,7 @@ export default function PersonForm() {
         </Pressable>
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -157,4 +159,4 @@ const styles = StyleSheet.create({
   contactsBtn: { flexDirection: 'row', alignItems: 'center', gap: Spacing.half },
   input: { borderRadius: Spacing.three, padding: Spacing.three, fontSize: 16, marginBottom: Spacing.two },
   save: { marginTop: Spacing.four, padding: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
-});
+})

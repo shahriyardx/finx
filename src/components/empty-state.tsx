@@ -1,21 +1,21 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { Pressable, StyleSheet, View } from 'react-native'
 
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import type { WalletIconName } from '@/lib/categories';
+import { ThemedText } from '@/components/themed-text'
+import { Spacing } from '@/constants/theme'
+import { useTheme } from '@/hooks/use-theme'
+import type { WalletIconName } from '@/lib/categories'
 
 type Props = {
-  icon: WalletIconName;
-  title: string;
-  message: string;
-  actionLabel?: string;
-  onAction?: () => void;
-};
+  icon: WalletIconName
+  title: string
+  message: string
+  actionLabel?: string
+  onAction?: () => void
+}
 
 export function EmptyState({ icon, title, message, actionLabel, onAction }: Props) {
-  const theme = useTheme();
+  const theme = useTheme()
   return (
     <View style={styles.container}>
       <View style={[styles.iconWrap, { backgroundColor: theme.backgroundElement }]}>
@@ -33,11 +33,16 @@ export function EmptyState({ icon, title, message, actionLabel, onAction }: Prop
         </Pressable>
       ) : null}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', paddingVertical: Spacing.six, paddingHorizontal: Spacing.four, gap: Spacing.three },
+  container: {
+    alignItems: 'center',
+    paddingVertical: Spacing.six,
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.three,
+  },
   iconWrap: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 22, lineHeight: 28, textAlign: 'center' },
   message: { textAlign: 'center', maxWidth: 280 },
@@ -50,4 +55,4 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   actionText: { fontSize: 16, lineHeight: 20, fontWeight: '700', textAlign: 'center' },
-});
+})

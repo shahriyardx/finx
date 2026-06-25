@@ -1,55 +1,53 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useMemo, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 
-import { useConfirm } from '@/components/confirm-dialog';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { createTransfer } from '@/db/repo';
-import { wallets } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
-import { parseMoney } from '@/lib/format';
+import { useConfirm } from '@/components/confirm-dialog'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { createTransfer } from '@/db/repo'
+import { wallets } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
+import { parseMoney } from '@/lib/format'
 
 export default function TransferForm() {
-  const theme = useTheme();
-  const router = useRouter();
-  const confirm = useConfirm();
-  const params = useLocalSearchParams<{ fromWalletId?: string }>();
-  const { data: walletRows } = useLiveQuery(db.select().from(wallets));
-  const list = walletRows ?? [];
+  const theme = useTheme()
+  const router = useRouter()
+  const confirm = useConfirm()
+  const params = useLocalSearchParams<{ fromWalletId?: string }>()
+  const { data: walletRows } = useLiveQuery(db.select().from(wallets))
+  const list = walletRows ?? []
 
-  const [fromId, setFromId] = useState<number | null>(
-    params.fromWalletId ? Number(params.fromWalletId) : null,
-  );
-  const [toId, setToId] = useState<number | null>(null);
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [fromId, setFromId] = useState<number | null>(params.fromWalletId ? Number(params.fromWalletId) : null)
+  const [toId, setToId] = useState<number | null>(null)
+  const [amount, setAmount] = useState('')
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const from = fromId ?? list[0]?.id ?? null;
-  const minor = useMemo(() => parseMoney(amount), [amount]);
-  const canSave = minor > 0 && from !== null && toId !== null && from !== toId && !saving;
+  const from = fromId ?? list[0]?.id ?? null
+  const minor = useMemo(() => parseMoney(amount), [amount])
+  const canSave = minor > 0 && from !== null && toId !== null && from !== toId && !saving
 
   const save = async () => {
-    if (!canSave || from === null || toId === null) return;
-    setSaving(true);
+    if (!canSave || from === null || toId === null) return
+    setSaving(true)
     try {
-      await createTransfer({ fromWalletId: from, toWalletId: toId, amount: minor, note: note.trim() || undefined });
-      router.back();
+      await createTransfer({ fromWalletId: from, toWalletId: toId, amount: minor, note: note.trim() || undefined })
+      router.back()
     } catch (e) {
-      setSaving(false);
+      setSaving(false)
       await confirm({
         title: 'Transfer failed',
         message: e instanceof Error ? e.message : 'Could not transfer.',
         confirmLabel: 'OK',
         destructive: false,
-      });
+      })
     }
-  };
+  }
 
   if (list.length < 2) {
     return (
@@ -60,14 +58,14 @@ export default function TransferForm() {
           </ThemedText>
         </View>
       </ThemedView>
-    );
+    )
   }
 
   const renderChips = (selected: number | null, onPick: (id: number) => void, disabledId: number | null) => (
     <View style={styles.chips}>
       {list.map((w) => {
-        const disabled = w.id === disabledId;
-        const active = selected === w.id;
+        const disabled = w.id === disabledId
+        const active = selected === w.id
         return (
           <Pressable
             key={w.id}
@@ -80,10 +78,10 @@ export default function TransferForm() {
             ]}>
             <ThemedText style={{ color: active ? theme.onAccent : theme.text }}>{w.name}</ThemedText>
           </Pressable>
-        );
+        )
       })}
     </View>
-  );
+  )
 
   return (
     <ThemedView style={styles.container}>
@@ -134,17 +132,23 @@ export default function TransferForm() {
         </Pressable>
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: Spacing.three, gap: Spacing.two, paddingBottom: Spacing.six },
-  amount: { borderRadius: Spacing.three, padding: Spacing.three, fontSize: 28, fontWeight: '700', marginBottom: Spacing.two },
+  amount: {
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: Spacing.two,
+  },
   input: { borderRadius: Spacing.three, padding: Spacing.three, fontSize: 16, marginBottom: Spacing.two },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginBottom: Spacing.one },
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
   arrowRow: { alignItems: 'center', paddingVertical: Spacing.one },
   save: { marginTop: Spacing.three, padding: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
   empty: { textAlign: 'center', paddingVertical: Spacing.four },
-});
+})

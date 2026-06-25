@@ -1,79 +1,79 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { eq } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import Constants from 'expo-constants';
-import { useRouter } from 'expo-router';
-import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { eq } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import Constants from 'expo-constants'
+import { useRouter } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
+import { useState } from 'react'
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { useAuth } from '@/auth/auth-context';
-import { useConfirm } from '@/components/confirm-dialog';
-import { SMS_IMPORT_KEY } from '@/components/sms-importer';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { importData, resetData, setSetting, type ResetSelection } from '@/db/repo';
-import { settings } from '@/db/schema';
-import { useCurrency } from '@/hooks/use-currency';
-import { useTheme } from '@/hooks/use-theme';
-import { exportBackupFile, pickBackupFile } from '@/lib/backup';
-import { CURRENCIES } from '@/lib/format';
+import { useAuth } from '@/auth/auth-context'
+import { useConfirm } from '@/components/confirm-dialog'
+import { SMS_IMPORT_KEY } from '@/components/sms-importer'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { importData, type ResetSelection, resetData, setSetting } from '@/db/repo'
+import { settings } from '@/db/schema'
+import { useCurrency } from '@/hooks/use-currency'
+import { useTheme } from '@/hooks/use-theme'
+import { exportBackupFile, pickBackupFile } from '@/lib/backup'
+import { CURRENCIES } from '@/lib/format'
 
-type ResetKey = keyof ResetSelection;
+type ResetKey = keyof ResetSelection
 const RESET_ITEMS: { key: ResetKey; label: string; hint: string }[] = [
   { key: 'transactions', label: 'Transactions', hint: 'All income & expenses; wallet balances reset to 0' },
   { key: 'wallets', label: 'Wallets', hint: 'Wallets and their transactions' },
   { key: 'people', label: 'People', hint: 'People and their debts & payments' },
   { key: 'debts', label: 'Debts', hint: 'All lend / borrow records & payments' },
-];
+]
 
 export default function SettingsScreen() {
-  const theme = useTheme();
-  const router = useRouter();
-  const confirm = useConfirm();
-  const currency = useCurrency();
-  const { biometricEnabled, biometricAvailable, enableBiometric, lock } = useAuth();
-  const [resetOpen, setResetOpen] = useState(false);
-  const [sel, setSel] = useState<ResetSelection>({});
+  const theme = useTheme()
+  const router = useRouter()
+  const confirm = useConfirm()
+  const currency = useCurrency()
+  const { biometricEnabled, biometricAvailable, enableBiometric, lock } = useAuth()
+  const [resetOpen, setResetOpen] = useState(false)
+  const [sel, setSel] = useState<ResetSelection>({})
 
-  const { data: smsRows } = useLiveQuery(db.select().from(settings).where(eq(settings.key, SMS_IMPORT_KEY)));
-  const smsImport = smsRows?.[0]?.value === '1';
+  const { data: smsRows } = useLiveQuery(db.select().from(settings).where(eq(settings.key, SMS_IMPORT_KEY)))
+  const smsImport = smsRows?.[0]?.value === '1'
 
-  const selectedCount = Object.values(sel).filter(Boolean).length;
+  const selectedCount = Object.values(sel).filter(Boolean).length
 
-  const toggle = (k: ResetKey) => setSel((s) => ({ ...s, [k]: !s[k] }));
+  const toggle = (k: ResetKey) => setSel((s) => ({ ...s, [k]: !s[k] }))
 
   const runReset = async () => {
-    const chosen = sel;
-    const labels = RESET_ITEMS.filter((i) => chosen[i.key]).map((i) => i.label.toLowerCase());
+    const chosen = sel
+    const labels = RESET_ITEMS.filter((i) => chosen[i.key]).map((i) => i.label.toLowerCase())
     // Close the sheet first — otherwise the confirm dialog renders behind it.
-    setResetOpen(false);
+    setResetOpen(false)
     const ok = await confirm({
       title: 'Delete selected data?',
       message: `Permanently deletes: ${labels.join(', ')}. This cannot be undone.`,
       confirmLabel: 'Delete',
-    });
+    })
     if (!ok) {
-      setResetOpen(true); // reopen so the user can adjust / retry
-      return;
+      setResetOpen(true) // reopen so the user can adjust / retry
+      return
     }
-    await resetData(chosen);
-    setSel({});
-  };
+    await resetData(chosen)
+    setSel({})
+  }
 
   const doExport = async () => {
     try {
-      const res = await exportBackupFile();
+      const res = await exportBackupFile()
       if (res.method === 'saved') {
         await confirm({
           title: 'Backup saved',
           message: `Saved ${res.name} to your chosen folder.`,
           confirmLabel: 'OK',
           destructive: false,
-        });
+        })
       }
     } catch (e) {
       await confirm({
@@ -81,36 +81,36 @@ export default function SettingsScreen() {
         message: e instanceof Error ? e.message : 'Could not export data.',
         confirmLabel: 'OK',
         destructive: false,
-      });
+      })
     }
-  };
+  }
 
   const doImport = async () => {
     try {
-      const parsed = await pickBackupFile();
-      if (parsed == null) return; // user cancelled the file picker
+      const parsed = await pickBackupFile()
+      if (parsed == null) return // user cancelled the file picker
       const ok = await confirm({
         title: 'Import backup?',
         message: 'This replaces ALL current data with the file contents. Cannot be undone.',
         confirmLabel: 'Import',
-      });
-      if (!ok) return;
-      const counts = await importData(parsed);
+      })
+      if (!ok) return
+      const counts = await importData(parsed)
       await confirm({
         title: 'Import complete',
         message: `Restored ${counts.wallets} wallets, ${counts.transactions} transactions, ${counts.persons} people, ${counts.debts} debts.`,
         confirmLabel: 'OK',
         destructive: false,
-      });
+      })
     } catch (e) {
       await confirm({
         title: 'Import failed',
         message: e instanceof Error ? e.message : 'Invalid or unreadable backup file.',
         confirmLabel: 'OK',
         destructive: false,
-      });
+      })
     }
-  };
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -229,9 +229,7 @@ export default function SettingsScreen() {
             About
           </ThemedText>
           <ThemedView type="backgroundElement" style={styles.card}>
-            <Pressable
-              style={styles.rowBetween}
-              onPress={() => WebBrowser.openBrowserAsync('https://shahriyar.dev')}>
+            <Pressable style={styles.rowBetween} onPress={() => WebBrowser.openBrowserAsync('https://shahriyar.dev')}>
               <View style={styles.dataRow}>
                 <MaterialCommunityIcons name="account-circle-outline" size={20} color={theme.text} />
                 <ThemedText type="default">Developer</ThemedText>
@@ -289,7 +287,7 @@ export default function SettingsScreen() {
             </ThemedText>
 
             {RESET_ITEMS.map((item) => {
-              const on = !!sel[item.key];
+              const on = !!sel[item.key]
               return (
                 <Pressable key={item.key} style={styles.resetRow} onPress={() => toggle(item.key)}>
                   <View
@@ -307,7 +305,7 @@ export default function SettingsScreen() {
                     </ThemedText>
                   </View>
                 </Pressable>
-              );
+              )
             })}
 
             <Pressable
@@ -322,7 +320,7 @@ export default function SettingsScreen() {
         </Pressable>
       </Modal>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -332,7 +330,12 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginTop: Spacing.one },
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
   card: { borderRadius: Spacing.three, padding: Spacing.three, marginTop: Spacing.one, gap: Spacing.two },
-  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.one },
+  rowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.one,
+  },
   dataRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   btnRow: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.one },
   secBtn: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
@@ -358,4 +361,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   deleteBtn: { marginTop: Spacing.two, padding: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
-});
+})

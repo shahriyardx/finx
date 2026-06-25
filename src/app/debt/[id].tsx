@@ -1,39 +1,39 @@
-import { desc, eq } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { desc, eq } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
-import { Avatar } from '@/components/avatar';
-import { useConfirm } from '@/components/confirm-dialog';
-import { Money } from '@/components/money';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { deleteDebt, deletePayment } from '@/db/repo';
-import { debtPayments, debts, persons, wallets } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
-import { formatDate } from '@/lib/format';
+import { Avatar } from '@/components/avatar'
+import { useConfirm } from '@/components/confirm-dialog'
+import { Money } from '@/components/money'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { deleteDebt, deletePayment } from '@/db/repo'
+import { debtPayments, debts, persons, wallets } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
+import { formatDate } from '@/lib/format'
 
 export default function DebtDetail() {
-  const theme = useTheme();
-  const router = useRouter();
-  const confirm = useConfirm();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const debtId = Number(id);
+  const theme = useTheme()
+  const router = useRouter()
+  const confirm = useConfirm()
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const debtId = Number(id)
 
-  const { data: debtRows } = useLiveQuery(db.select().from(debts).where(eq(debts.id, debtId)), [debtId]);
+  const { data: debtRows } = useLiveQuery(db.select().from(debts).where(eq(debts.id, debtId)), [debtId])
   const { data: payRows } = useLiveQuery(
     db.select().from(debtPayments).where(eq(debtPayments.debtId, debtId)).orderBy(desc(debtPayments.date)),
     [debtId],
-  );
-  const { data: personRows } = useLiveQuery(db.select().from(persons));
-  const { data: walletRows } = useLiveQuery(db.select().from(wallets));
+  )
+  const { data: personRows } = useLiveQuery(db.select().from(persons))
+  const { data: walletRows } = useLiveQuery(db.select().from(wallets))
 
-  const debt = debtRows?.[0];
-  const person = personRows?.find((p) => p.id === debt?.personId);
+  const debt = debtRows?.[0]
+  const person = personRows?.find((p) => p.id === debt?.personId)
   const walletName = (wid: number | null) =>
-    wid == null ? 'No wallet' : (walletRows?.find((w) => w.id === wid)?.name ?? 'Wallet');
+    wid == null ? 'No wallet' : (walletRows?.find((w) => w.id === wid)?.name ?? 'Wallet')
 
   const confirmDeletePayment = async (paymentId: number) => {
     if (
@@ -42,9 +42,9 @@ export default function DebtDetail() {
         message: 'Outstanding will be restored and the wallet move reversed.',
       })
     ) {
-      deletePayment(paymentId);
+      deletePayment(paymentId)
     }
-  };
+  }
 
   const confirmDelete = async () => {
     if (
@@ -53,22 +53,22 @@ export default function DebtDetail() {
         message: 'Removes this debt and its payment records. Wallet balances are not reversed.',
       })
     ) {
-      await deleteDebt(debtId);
-      router.back();
+      await deleteDebt(debtId)
+      router.back()
     }
-  };
+  }
 
   if (!debt) {
     return (
       <ThemedView style={styles.container}>
         <ThemedText style={styles.empty}>Debt not found.</ThemedText>
       </ThemedView>
-    );
+    )
   }
 
-  const isLend = debt.type === 'lend';
-  const paid = debt.principal - debt.outstanding;
-  const payments = payRows ?? [];
+  const isLend = debt.type === 'lend'
+  const paid = debt.principal - debt.outstanding
+  const payments = payRows ?? []
 
   return (
     <ThemedView style={styles.container}>
@@ -162,7 +162,7 @@ export default function DebtDetail() {
         )}
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -173,7 +173,7 @@ function Row({ label, value }: { label: string; value: string }) {
       </ThemedText>
       <ThemedText type="small">{value}</ThemedText>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -194,4 +194,4 @@ const styles = StyleSheet.create({
   payRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three, paddingVertical: Spacing.two },
   empty: { paddingVertical: Spacing.four, textAlign: 'center' },
   hint: { textAlign: 'center' },
-});
+})

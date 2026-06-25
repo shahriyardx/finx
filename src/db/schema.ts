@@ -1,5 +1,5 @@
-import { sql } from 'drizzle-orm';
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm'
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 /**
  * All monetary amounts are stored as integer minor units (cents) to avoid
@@ -14,10 +14,8 @@ export const wallets = sqliteTable('wallets', {
   icon: text('icon').notNull().default('wallet'),
   // Optional bank-SMS sender mapped to this wallet (bank id from lib/banks).
   smsSender: text('sms_sender'),
-  createdAt: integer('created_at')
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-});
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+})
 
 export const transactions = sqliteTable('transactions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -30,10 +28,8 @@ export const transactions = sqliteTable('transactions', {
   note: text('note'),
   receipt: text('receipt'), // local file uri of an attached receipt photo, optional
   date: integer('date').notNull(),
-  createdAt: integer('created_at')
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-});
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+})
 
 /** Money moved between two wallets. Kept out of the income/expense ledger. */
 export const transfers = sqliteTable('transfers', {
@@ -47,10 +43,8 @@ export const transfers = sqliteTable('transfers', {
   amount: integer('amount').notNull(),
   note: text('note'),
   date: integer('date').notNull(),
-  createdAt: integer('created_at')
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-});
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+})
 
 export const persons = sqliteTable('persons', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -58,10 +52,8 @@ export const persons = sqliteTable('persons', {
   phone: text('phone'),
   note: text('note'),
   avatar: text('avatar'), // local file uri, optional
-  createdAt: integer('created_at')
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-});
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+})
 
 export const debts = sqliteTable('debts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -79,10 +71,8 @@ export const debts = sqliteTable('debts', {
   status: text('status', { enum: ['open', 'settled'] })
     .notNull()
     .default('open'),
-  createdAt: integer('created_at')
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-});
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+})
 
 export const debtPayments = sqliteTable('debt_payments', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -93,24 +83,22 @@ export const debtPayments = sqliteTable('debt_payments', {
   walletId: integer('wallet_id').references(() => wallets.id, { onDelete: 'set null' }),
   amount: integer('amount').notNull(),
   date: integer('date').notNull(),
-  createdAt: integer('created_at')
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-});
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+})
 
 export const settings = sqliteTable('settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
-});
+})
 
-export type Wallet = typeof wallets.$inferSelect;
-export type NewWallet = typeof wallets.$inferInsert;
-export type Transaction = typeof transactions.$inferSelect;
-export type NewTransaction = typeof transactions.$inferInsert;
-export type Person = typeof persons.$inferSelect;
-export type NewPerson = typeof persons.$inferInsert;
-export type Debt = typeof debts.$inferSelect;
-export type NewDebt = typeof debts.$inferInsert;
-export type DebtPayment = typeof debtPayments.$inferSelect;
-export type Transfer = typeof transfers.$inferSelect;
-export type NewTransfer = typeof transfers.$inferInsert;
+export type Wallet = typeof wallets.$inferSelect
+export type NewWallet = typeof wallets.$inferInsert
+export type Transaction = typeof transactions.$inferSelect
+export type NewTransaction = typeof transactions.$inferInsert
+export type Person = typeof persons.$inferSelect
+export type NewPerson = typeof persons.$inferInsert
+export type Debt = typeof debts.$inferSelect
+export type NewDebt = typeof debts.$inferInsert
+export type DebtPayment = typeof debtPayments.$inferSelect
+export type Transfer = typeof transfers.$inferSelect
+export type NewTransfer = typeof transfers.$inferInsert

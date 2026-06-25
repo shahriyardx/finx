@@ -1,23 +1,23 @@
-import { useEffect, useState } from 'react';
-import { useColorScheme as useRNColorScheme } from 'react-native';
+import { useEffect, useState } from 'react'
+import { useColorScheme as useRNColorScheme } from 'react-native'
 
 /**
  * To support static rendering, this value needs to be re-calculated on the client side for web
  */
 export function useColorScheme() {
-  const [hasHydrated, setHasHydrated] = useState(false);
+  const [hasHydrated, setHasHydrated] = useState(false)
 
   useEffect(() => {
     // Hydration flag must flip exactly once on the client for static web rendering.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasHydrated(true);
-  }, []);
+    setHasHydrated(true)
+  }, [])
 
-  const colorScheme = useRNColorScheme();
+  const colorScheme = useRNColorScheme()
 
   if (hasHydrated) {
-    return colorScheme;
+    return colorScheme
   }
 
-  return 'light';
+  return 'light'
 }

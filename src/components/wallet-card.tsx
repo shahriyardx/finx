@@ -1,22 +1,22 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native'
 
-import { Money } from '@/components/money';
-import { ThemedText } from '@/components/themed-text';
-import { WalletIconBadge } from '@/components/wallet-icon-badge';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import type { WalletIconName } from '@/lib/categories';
+import { Money } from '@/components/money'
+import { ThemedText } from '@/components/themed-text'
+import { WalletIconBadge } from '@/components/wallet-icon-badge'
+import { Spacing } from '@/constants/theme'
+import { useTheme } from '@/hooks/use-theme'
+import type { WalletIconName } from '@/lib/categories'
 
 type Props = {
-  name: string;
-  balance: number;
-  color: string;
-  icon: string;
-  onPress?: () => void;
-};
+  name: string
+  balance: number
+  color: string
+  icon: string
+  onPress?: () => void
+}
 
 export function WalletCard({ name, balance, color, icon, onPress }: Props) {
-  const theme = useTheme();
+  const theme = useTheme()
   return (
     <Pressable
       onPress={onPress}
@@ -33,7 +33,7 @@ export function WalletCard({ name, balance, color, icon, onPress }: Props) {
       </View>
       <Money value={balance} type="smallBold" signed={balance < 0} />
     </Pressable>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -45,4 +45,4 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
   },
   middle: { flex: 1, gap: 2 },
-});
+})

@@ -1,19 +1,19 @@
-import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image'
+import { useLocalSearchParams } from 'expo-router'
+import { useState } from 'react'
+import { StyleSheet, View } from 'react-native'
 
-import { ThemedText } from '@/components/themed-text';
-import { resolveReceipt } from '@/lib/receipt';
+import { ThemedText } from '@/components/themed-text'
+import { resolveReceipt } from '@/lib/receipt'
 
 export default function ReceiptViewer() {
-  const params = useLocalSearchParams<{ uri?: string }>();
+  const params = useLocalSearchParams<{ uri?: string }>()
   // The receipt path is passed encoded; the router may hand it back still
   // encoded, so decode before use (no-op if already decoded). Then resolve a
   // relative path against the current document directory.
-  const stored = params.uri ? decodeURIComponent(params.uri) : undefined;
-  const uri = stored ? resolveReceipt(stored) : undefined;
-  const [error, setError] = useState<string | null>(null);
+  const stored = params.uri ? decodeURIComponent(params.uri) : undefined
+  const uri = stored ? resolveReceipt(stored) : undefined
+  const [error, setError] = useState<string | null>(null)
 
   return (
     <View style={styles.container}>
@@ -38,7 +38,7 @@ export default function ReceiptViewer() {
         </View>
       )}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -47,4 +47,4 @@ const styles = StyleSheet.create({
   overlay: { position: 'absolute', padding: 24, alignItems: 'center', gap: 12 },
   text: { color: '#fff', textAlign: 'center' },
   uri: { color: '#9aa', textAlign: 'center' },
-});
+})

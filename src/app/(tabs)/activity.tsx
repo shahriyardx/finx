@@ -1,39 +1,39 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { desc, eq } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { desc, eq } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { useRouter } from 'expo-router'
+import { useMemo, useState } from 'react'
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { useConfirm } from '@/components/confirm-dialog';
-import { EmptyState } from '@/components/empty-state';
-import { Money } from '@/components/money';
-import { PeriodPicker } from '@/components/period-picker';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { TransactionRow } from '@/components/transaction-row';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { deleteTransaction } from '@/db/repo';
-import { transactions, wallets } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
-import { bounds, periodLabel, shiftAnchor, type Gran } from '@/lib/date-range';
+import { useConfirm } from '@/components/confirm-dialog'
+import { EmptyState } from '@/components/empty-state'
+import { Money } from '@/components/money'
+import { PeriodPicker } from '@/components/period-picker'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { TransactionRow } from '@/components/transaction-row'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { deleteTransaction } from '@/db/repo'
+import { transactions, wallets } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
+import { bounds, type Gran, periodLabel, shiftAnchor } from '@/lib/date-range'
 
-type Filter = 'all' | 'income' | 'expense';
-const TYPE_LABEL: Record<Filter, string> = { all: 'All', income: 'Income', expense: 'Expense' };
+type Filter = 'all' | 'income' | 'expense'
+const TYPE_LABEL: Record<Filter, string> = { all: 'All', income: 'Income', expense: 'Expense' }
 
 export default function ActivityScreen() {
-  const theme = useTheme();
-  const router = useRouter();
-  const confirm = useConfirm();
-  const now = useMemo(() => new Date(), []);
+  const theme = useTheme()
+  const router = useRouter()
+  const confirm = useConfirm()
+  const now = useMemo(() => new Date(), [])
 
-  const [filter, setFilter] = useState<Filter>('all');
-  const [gran, setGran] = useState<Gran>('month');
-  const [anchor, setAnchor] = useState<Date>(now);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [filter, setFilter] = useState<Filter>('all')
+  const [gran, setGran] = useState<Gran>('month')
+  const [anchor, setAnchor] = useState<Date>(now)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
 
   const { data } = useLiveQuery(
     db
@@ -50,24 +50,24 @@ export default function ActivityScreen() {
       .from(transactions)
       .leftJoin(wallets, eq(transactions.walletId, wallets.id))
       .orderBy(desc(transactions.date)),
-  );
+  )
 
   const inRange = useMemo(() => {
-    const { start, end } = bounds(gran, anchor);
-    return (data ?? []).filter((t) => t.date >= start && t.date < end);
-  }, [data, gran, anchor]);
+    const { start, end } = bounds(gran, anchor)
+    return (data ?? []).filter((t) => t.date >= start && t.date < end)
+  }, [data, gran, anchor])
 
-  const income = inRange.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const spent = inRange.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const rows = inRange.filter((t) => filter === 'all' || t.type === filter);
+  const income = inRange.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const spent = inRange.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const rows = inRange.filter((t) => filter === 'all' || t.type === filter)
 
   const confirmDelete = async (id: number) => {
     if (await confirm({ title: 'Delete transaction', message: 'The wallet balance will be restored.' })) {
-      deleteTransaction(id);
+      deleteTransaction(id)
     }
-  };
+  }
 
-  const canStep = gran !== 'all';
+  const canStep = gran !== 'all'
 
   return (
     <ThemedView style={styles.container}>
@@ -167,8 +167,8 @@ export default function ActivityScreen() {
         now={now}
         onClose={() => setPickerOpen(false)}
         onSelect={(g, a) => {
-          setGran(g);
-          setAnchor(a);
+          setGran(g)
+          setAnchor(a)
         }}
       />
 
@@ -185,8 +185,8 @@ export default function ActivityScreen() {
               <Pressable
                 key={f}
                 onPress={() => {
-                  setFilter(f);
-                  setFilterOpen(false);
+                  setFilter(f)
+                  setFilterOpen(false)
                 }}
                 style={styles.menuItem}>
                 <ThemedText
@@ -194,16 +194,14 @@ export default function ActivityScreen() {
                   style={{ color: filter === f ? theme.accent : theme.text, fontWeight: filter === f ? '700' : '500' }}>
                   {TYPE_LABEL[f]}
                 </ThemedText>
-                {filter === f ? (
-                  <MaterialCommunityIcons name="check" size={20} color={theme.accent} />
-                ) : null}
+                {filter === f ? <MaterialCommunityIcons name="check" size={20} color={theme.accent} /> : null}
               </Pressable>
             ))}
           </Pressable>
         </Pressable>
       </Modal>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -219,7 +217,17 @@ const styles = StyleSheet.create({
   summaryCol: { gap: 2 },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
   menuBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: Spacing.five },
-  menu: { borderRadius: Spacing.three, borderWidth: StyleSheet.hairlineWidth, padding: Spacing.three, gap: Spacing.one },
+  menu: {
+    borderRadius: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: Spacing.three,
+    gap: Spacing.one,
+  },
   menuTitle: { marginBottom: Spacing.one },
-  menuItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.two },
-});
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.two,
+  },
+})

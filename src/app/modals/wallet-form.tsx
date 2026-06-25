@@ -1,72 +1,75 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { eq } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { eq } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useEffect, useState } from 'react'
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 
-import { ColorPicker } from '@/components/color-picker';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WalletIconBadge } from '@/components/wallet-icon-badge';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { createWallet, updateWallet } from '@/db/repo';
-import { wallets } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
-import { BANKS } from '@/lib/banks';
-import { WALLET_COLORS, WALLET_ICONS, type WalletIconName } from '@/lib/categories';
-import { parseMoney } from '@/lib/format';
+import { ColorPicker } from '@/components/color-picker'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { WalletIconBadge } from '@/components/wallet-icon-badge'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { createWallet, updateWallet } from '@/db/repo'
+import { wallets } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
+import { BANKS } from '@/lib/banks'
+import { WALLET_COLORS, WALLET_ICONS, type WalletIconName } from '@/lib/categories'
+import { parseMoney } from '@/lib/format'
 
 export default function WalletFormScreen() {
-  const theme = useTheme();
-  const router = useRouter();
-  const params = useLocalSearchParams<{ id?: string }>();
-  const editId = params.id ? Number(params.id) : null;
+  const theme = useTheme()
+  const router = useRouter()
+  const params = useLocalSearchParams<{ id?: string }>()
+  const editId = params.id ? Number(params.id) : null
 
   const { data } = useLiveQuery(
-    db.select().from(wallets).where(eq(wallets.id, editId ?? -1)),
+    db
+      .select()
+      .from(wallets)
+      .where(eq(wallets.id, editId ?? -1)),
     [editId],
-  );
+  )
 
-  const [name, setName] = useState('');
-  const [opening, setOpening] = useState('');
-  const [color, setColor] = useState<string>(WALLET_COLORS[0]);
-  const [icon, setIcon] = useState<WalletIconName>(WALLET_ICONS[0]);
-  const [smsSender, setSmsSender] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [name, setName] = useState('')
+  const [opening, setOpening] = useState('')
+  const [color, setColor] = useState<string>(WALLET_COLORS[0])
+  const [icon, setIcon] = useState<WalletIconName>(WALLET_ICONS[0])
+  const [smsSender, setSmsSender] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
   // Live value while dragging in the picker; committed to `color` on Done.
-  const [draftColor, setDraftColor] = useState<string>(color);
+  const [draftColor, setDraftColor] = useState<string>(color)
 
-  const isCustom = !WALLET_COLORS.includes(color);
+  const isCustom = !WALLET_COLORS.includes(color)
 
   useEffect(() => {
     if (editId && !loaded && data?.[0]) {
-      const w = data[0];
+      const w = data[0]
       /* eslint-disable react-hooks/set-state-in-effect */
-      setName(w.name);
-      setColor(w.color);
-      setIcon(w.icon as WalletIconName);
-      setSmsSender(w.smsSender ?? null);
-      setLoaded(true);
+      setName(w.name)
+      setColor(w.color)
+      setIcon(w.icon as WalletIconName)
+      setSmsSender(w.smsSender ?? null)
+      setLoaded(true)
       /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [editId, loaded, data]);
+  }, [editId, loaded, data])
 
-  const canSave = name.trim().length > 0 && !saving;
+  const canSave = name.trim().length > 0 && !saving
 
   const save = async () => {
-    if (!canSave) return;
-    setSaving(true);
+    if (!canSave) return
+    setSaving(true)
     if (editId) {
-      await updateWallet(editId, { name: name.trim(), color, icon, smsSender });
+      await updateWallet(editId, { name: name.trim(), color, icon, smsSender })
     } else {
-      await createWallet({ name: name.trim(), color, icon, opening: parseMoney(opening), smsSender });
+      await createWallet({ name: name.trim(), color, icon, opening: parseMoney(opening), smsSender })
     }
-    router.back();
-  };
+    router.back()
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -107,19 +110,15 @@ export default function WalletFormScreen() {
           {/* Rainbow disk → custom color picker */}
           <Pressable
             onPress={() => {
-              setDraftColor(color);
-              setPickerOpen(true);
+              setDraftColor(color)
+              setPickerOpen(true)
             }}
             style={[
               styles.swatch,
               styles.disk,
               isCustom && { backgroundColor: color, borderColor: theme.text, borderWidth: 3 },
             ]}>
-            <MaterialCommunityIcons
-              name="palette"
-              size={22}
-              color={isCustom ? '#ffffff' : theme.text}
-            />
+            <MaterialCommunityIcons name="palette" size={22} color={isCustom ? '#ffffff' : theme.text} />
           </Pressable>
           {WALLET_COLORS.map((c) => (
             <Pressable
@@ -146,8 +145,8 @@ export default function WalletFormScreen() {
                 </Pressable>
                 <Pressable
                   onPress={() => {
-                    setColor(draftColor);
-                    setPickerOpen(false);
+                    setColor(draftColor)
+                    setPickerOpen(false)
                   }}
                   style={[styles.pickerBtn, { backgroundColor: theme.accent, borderRadius: Spacing.three }]}>
                   <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>Use color</ThemedText>
@@ -179,7 +178,7 @@ export default function WalletFormScreen() {
         </ThemedText>
         <View style={styles.chips}>
           {[{ id: null, label: 'None', supported: true }, ...BANKS].map((b) => {
-            const active = smsSender === b.id;
+            const active = smsSender === b.id
             return (
               <Pressable
                 key={b.id ?? 'none'}
@@ -194,7 +193,7 @@ export default function WalletFormScreen() {
                   {b.supported ? '' : ' (soon)'}
                 </ThemedText>
               </Pressable>
-            );
+            )
           })}
         </View>
 
@@ -208,7 +207,7 @@ export default function WalletFormScreen() {
         </Pressable>
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -227,11 +226,16 @@ const styles = StyleSheet.create({
   pickerBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: Spacing.four },
   pickerCard: { borderRadius: Spacing.four, padding: Spacing.four, gap: Spacing.three },
   pickerActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: Spacing.two, marginTop: Spacing.two },
-  pickerBtn: { paddingHorizontal: Spacing.four, paddingVertical: Spacing.three, alignItems: 'center', justifyContent: 'center' },
+  pickerBtn: {
+    paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.three,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   icons: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
   iconWrap: { borderRadius: 18, borderWidth: 3, borderColor: 'transparent', padding: 2 },
   hint: { marginBottom: Spacing.one },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginVertical: Spacing.two },
   chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
   save: { marginTop: Spacing.four, padding: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
-});
+})

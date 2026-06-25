@@ -1,44 +1,41 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { eq } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Image } from 'expo-image';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { eq } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { Image } from 'expo-image'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
-import { useConfirm } from '@/components/confirm-dialog';
-import { Money } from '@/components/money';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { deleteTransaction } from '@/db/repo';
-import { transactions, wallets } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
-import { categoryLabel } from '@/lib/categories';
-import { formatDate } from '@/lib/format';
-import { resolveReceipt } from '@/lib/receipt';
+import { useConfirm } from '@/components/confirm-dialog'
+import { Money } from '@/components/money'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { deleteTransaction } from '@/db/repo'
+import { transactions, wallets } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
+import { categoryLabel } from '@/lib/categories'
+import { formatDate } from '@/lib/format'
+import { resolveReceipt } from '@/lib/receipt'
 
 export default function TransactionDetail() {
-  const theme = useTheme();
-  const router = useRouter();
-  const confirm = useConfirm();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const txId = Number(id);
+  const theme = useTheme()
+  const router = useRouter()
+  const confirm = useConfirm()
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const txId = Number(id)
 
-  const { data: rows } = useLiveQuery(
-    db.select().from(transactions).where(eq(transactions.id, txId)),
-    [txId],
-  );
-  const { data: walletRows } = useLiveQuery(db.select().from(wallets));
-  const tx = rows?.[0];
-  const wallet = walletRows?.find((w) => w.id === tx?.walletId);
+  const { data: rows } = useLiveQuery(db.select().from(transactions).where(eq(transactions.id, txId)), [txId])
+  const { data: walletRows } = useLiveQuery(db.select().from(wallets))
+  const tx = rows?.[0]
+  const wallet = walletRows?.find((w) => w.id === tx?.walletId)
 
   const confirmDelete = async () => {
     if (await confirm({ title: 'Delete transaction', message: 'This reverses its effect on the wallet balance.' })) {
-      await deleteTransaction(txId);
-      router.back();
+      await deleteTransaction(txId)
+      router.back()
     }
-  };
+  }
 
   if (!tx) {
     return (
@@ -46,10 +43,10 @@ export default function TransactionDetail() {
         <Stack.Screen options={{ title: 'Transaction' }} />
         <ThemedText style={styles.empty}>Transaction not found.</ThemedText>
       </ThemedView>
-    );
+    )
   }
 
-  const signed = tx.type === 'income' ? tx.amount : -tx.amount;
+  const signed = tx.type === 'income' ? tx.amount : -tx.amount
 
   return (
     <ThemedView style={styles.container}>
@@ -104,7 +101,7 @@ export default function TransactionDetail() {
         </Pressable>
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 function Field({ label, value }: { label: string; value: string }) {
@@ -117,7 +114,7 @@ function Field({ label, value }: { label: string; value: string }) {
         {value}
       </ThemedText>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -145,6 +142,12 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Spacing.three,
   },
-  deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.two, paddingVertical: Spacing.two },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    paddingVertical: Spacing.two,
+  },
   empty: { textAlign: 'center', paddingVertical: Spacing.four },
-});
+})

@@ -1,28 +1,28 @@
-import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react'
+import { Modal, Pressable, StyleSheet, View } from 'react-native'
 
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { GRANS, MONTHS_FULL, type Gran } from '@/lib/date-range';
+import { ThemedText } from '@/components/themed-text'
+import { Spacing } from '@/constants/theme'
+import { useTheme } from '@/hooks/use-theme'
+import { GRANS, type Gran, MONTHS_FULL } from '@/lib/date-range'
 
 type Props = {
-  visible: boolean;
-  gran: Gran;
-  anchor: Date;
-  now: Date;
-  onClose: () => void;
-  onSelect: (gran: Gran, anchor: Date) => void;
-};
+  visible: boolean
+  gran: Gran
+  anchor: Date
+  now: Date
+  onClose: () => void
+  onSelect: (gran: Gran, anchor: Date) => void
+}
 
 export function PeriodPicker({ visible, gran, anchor, now, onClose, onSelect }: Props) {
-  const theme = useTheme();
-  const [pickYear, setPickYear] = useState(anchor.getFullYear());
+  const theme = useTheme()
+  const [pickYear, setPickYear] = useState(anchor.getFullYear())
 
   const choose = (g: Gran, a: Date) => {
-    onSelect(g, a);
-    onClose();
-  };
+    onSelect(g, a)
+    onClose()
+  }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -71,7 +71,7 @@ export function PeriodPicker({ visible, gran, anchor, now, onClose, onSelect }: 
 
           <View style={styles.grid}>
             {MONTHS_FULL.map((mLabel, idx) => {
-              const active = gran === 'month' && anchor.getFullYear() === pickYear && anchor.getMonth() === idx;
+              const active = gran === 'month' && anchor.getFullYear() === pickYear && anchor.getMonth() === idx
               return (
                 <Pressable
                   key={mLabel}
@@ -81,19 +81,17 @@ export function PeriodPicker({ visible, gran, anchor, now, onClose, onSelect }: 
                     { backgroundColor: theme.background },
                     active && { backgroundColor: theme.accent },
                   ]}>
-                  <ThemedText
-                    type="small"
-                    style={{ color: active ? theme.onAccent : theme.text, fontWeight: '600' }}>
+                  <ThemedText type="small" style={{ color: active ? theme.onAccent : theme.text, fontWeight: '600' }}>
                     {mLabel}
                   </ThemedText>
                 </Pressable>
-              );
+              )
             })}
           </View>
         </Pressable>
       </Pressable>
     </Modal>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -106,7 +104,14 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.six,
     gap: Spacing.three,
   },
-  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: '#8884', marginBottom: Spacing.one },
+  handle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#8884',
+    marginBottom: Spacing.one,
+  },
   quick: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   quickBtn: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
   section: { marginTop: Spacing.one },
@@ -119,4 +124,4 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     alignItems: 'center',
   },
-});
+})

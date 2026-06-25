@@ -1,9 +1,9 @@
-import type MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import type { ComponentProps } from 'react';
+import type MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import type { ComponentProps } from 'react'
 
-export type WalletIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type WalletIconName = ComponentProps<typeof MaterialCommunityIcons>['name']
 
-export type Category = { key: string; label: string; icon: WalletIconName };
+export type Category = { key: string; label: string; icon: WalletIconName }
 
 export const EXPENSE_CATEGORIES: Category[] = [
   { key: 'food', label: 'Food', icon: 'silverware-fork-knife' },
@@ -14,18 +14,18 @@ export const EXPENSE_CATEGORIES: Category[] = [
   { key: 'health', label: 'Health', icon: 'heart-pulse' },
   { key: 'fun', label: 'Fun', icon: 'gamepad-variant' },
   { key: 'other', label: 'Other', icon: 'dots-horizontal-circle' },
-];
+]
 
 export const INCOME_CATEGORIES: Category[] = [
   { key: 'salary', label: 'Salary', icon: 'cash' },
   { key: 'gift', label: 'Gift', icon: 'gift' },
   { key: 'business', label: 'Business', icon: 'briefcase' },
   { key: 'other', label: 'Other', icon: 'dots-horizontal-circle' },
-];
+]
 
 export function categoryLabel(key: string): string {
-  const all = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
-  return all.find((c) => c.key === key)?.label ?? key;
+  const all = [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]
+  return all.find((c) => c.key === key)?.label ?? key
 }
 
 export const WALLET_COLORS = [
@@ -39,7 +39,7 @@ export const WALLET_COLORS = [
   '#EF4444', // red
   '#F97316', // orange
   '#F59E0B', // amber
-];
+]
 
 /** MaterialCommunityIcons (vector) names — wallet-related, cross-platform. */
 export const WALLET_ICONS: WalletIconName[] = [
@@ -55,4 +55,4 @@ export const WALLET_ICONS: WalletIconName[] = [
   'wallet-travel',
   'hand-coin',
   'chart-line',
-];
+]

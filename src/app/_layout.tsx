@@ -1,18 +1,18 @@
-import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator'
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router'
+import { StatusBar } from 'expo-status-bar'
+import { ActivityIndicator, StyleSheet, useColorScheme } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
-import { AuthProvider } from '@/auth/auth-context';
-import { ConfirmProvider } from '@/components/confirm-dialog';
-import { LockOverlay } from '@/components/lock-overlay';
-import { SmsImporter } from '@/components/sms-importer';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Brand, Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import migrations from '@/db/migrations';
+import { AuthProvider } from '@/auth/auth-context'
+import { ConfirmProvider } from '@/components/confirm-dialog'
+import { LockOverlay } from '@/components/lock-overlay'
+import { SmsImporter } from '@/components/sms-importer'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { Brand, Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import migrations from '@/db/migrations'
 
 function GateView({ message }: { message: string }) {
   return (
@@ -22,7 +22,7 @@ function GateView({ message }: { message: string }) {
         {message}
       </ThemedText>
     </ThemedView>
-  );
+  )
 }
 
 function RootNavigator() {
@@ -59,21 +59,18 @@ function RootNavigator() {
         name="modals/transfer-form"
         options={{ presentation: 'modal', headerShown: true, title: 'Transfer' }}
       />
-      <Stack.Screen
-        name="modals/receipt"
-        options={{ presentation: 'modal', headerShown: true, title: 'Receipt' }}
-      />
+      <Stack.Screen name="modals/receipt" options={{ presentation: 'modal', headerShown: true, title: 'Receipt' }} />
       <Stack.Screen
         name="modals/change-pin"
         options={{ presentation: 'modal', headerShown: true, title: 'Change PIN' }}
       />
     </Stack>
-  );
+  )
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const { success, error } = useMigrations(db, migrations);
+  const colorScheme = useColorScheme()
+  const { success, error } = useMigrations(db, migrations)
 
   if (error) {
     return (
@@ -83,10 +80,10 @@ export default function RootLayout() {
           {error.message}
         </ThemedText>
       </ThemedView>
-    );
+    )
   }
 
-  if (!success) return <GateView message="Preparing database…" />;
+  if (!success) return <GateView message="Preparing database…" />
 
   return (
     <GestureHandlerRootView style={styles.flex}>
@@ -101,11 +98,11 @@ export default function RootLayout() {
         </AuthProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.two },
   gap: { marginTop: Spacing.one },
-});
+})

@@ -1,55 +1,52 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { desc, eq } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { desc, eq } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 
-import { Avatar } from '@/components/avatar';
-import { useConfirm } from '@/components/confirm-dialog';
-import { Money } from '@/components/money';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { deletePerson } from '@/db/repo';
-import { debts, persons } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
-import { formatDate } from '@/lib/format';
+import { Avatar } from '@/components/avatar'
+import { useConfirm } from '@/components/confirm-dialog'
+import { Money } from '@/components/money'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { deletePerson } from '@/db/repo'
+import { debts, persons } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
+import { formatDate } from '@/lib/format'
 
 export default function PersonDetail() {
-  const theme = useTheme();
-  const router = useRouter();
-  const confirm = useConfirm();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const personId = Number(id);
+  const theme = useTheme()
+  const router = useRouter()
+  const confirm = useConfirm()
+  const { id } = useLocalSearchParams<{ id: string }>()
+  const personId = Number(id)
 
-  const { data: personRows } = useLiveQuery(
-    db.select().from(persons).where(eq(persons.id, personId)),
-    [personId],
-  );
+  const { data: personRows } = useLiveQuery(db.select().from(persons).where(eq(persons.id, personId)), [personId])
   const { data: debtRows } = useLiveQuery(
     db.select().from(debts).where(eq(debts.personId, personId)).orderBy(desc(debts.date)),
     [personId],
-  );
-  const person = personRows?.[0];
-  const list = debtRows ?? [];
+  )
+  const person = personRows?.[0]
+  const list = debtRows ?? []
   const net = list
     .filter((d) => d.status === 'open')
-    .reduce((s, d) => s + (d.type === 'lend' ? d.outstanding : -d.outstanding), 0);
+    .reduce((s, d) => s + (d.type === 'lend' ? d.outstanding : -d.outstanding), 0)
 
   const confirmDeletePerson = async () => {
     if (await confirm({ title: 'Delete person', message: 'Removes this person and all their debts.' })) {
-      await deletePerson(personId);
-      router.back();
+      await deletePerson(personId)
+      router.back()
     }
-  };
+  }
 
   if (!person) {
     return (
       <ThemedView style={styles.container}>
         <ThemedText style={styles.empty}>Person not found.</ThemedText>
       </ThemedView>
-    );
+    )
   }
 
   return (
@@ -131,7 +128,7 @@ export default function PersonDetail() {
         )}
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -148,4 +145,4 @@ const styles = StyleSheet.create({
   debt: { borderRadius: Spacing.three, padding: Spacing.three, gap: Spacing.one },
   debtTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   empty: { paddingVertical: Spacing.four, textAlign: 'center' },
-});
+})

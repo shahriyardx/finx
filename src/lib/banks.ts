@@ -1,19 +1,19 @@
-import { parseBkashSms, parseCityBankSms, parseStanChartSms, type ParsedSms } from './sms-parser';
+import { type ParsedSms, parseBkashSms, parseCityBankSms, parseStanChartSms } from './sms-parser'
 
 /** Banks whose SMS we can map to a wallet. Add a parser to enable auto-import. */
-export type BankId = 'citybank' | 'stanchart' | 'bkash';
+export type BankId = 'citybank' | 'stanchart' | 'bkash'
 
 export type Bank = {
-  id: BankId;
+  id: BankId
   /** Human label shown in the wallet form picker. */
-  label: string;
+  label: string
   /** Normalized sender tokens (uppercase letters only) that identify this bank. */
-  senderAliases: string[];
+  senderAliases: string[]
   /** Parse a message body into a transaction, or null if unsupported/unmatched. */
-  parse: (body: string) => ParsedSms | null;
+  parse: (body: string) => ParsedSms | null
   /** False while the parser is still a stub (selectable, but won't import yet). */
-  supported: boolean;
-};
+  supported: boolean
+}
 
 export const BANKS: Bank[] = [
   {
@@ -38,18 +38,18 @@ export const BANKS: Bank[] = [
     parse: parseBkashSms,
     supported: true,
   },
-];
+]
 
 export function normalizeSender(sender: string): string {
-  return sender.toUpperCase().replace(/[^A-Z]/g, '');
+  return sender.toUpperCase().replace(/[^A-Z]/g, '')
 }
 
 /** Find the bank a raw SMS sender belongs to, or null. */
 export function bankForSender(sender: string): Bank | null {
-  const n = normalizeSender(sender);
-  return BANKS.find((b) => b.senderAliases.some((a) => n.includes(a))) ?? null;
+  const n = normalizeSender(sender)
+  return BANKS.find((b) => b.senderAliases.some((a) => n.includes(a))) ?? null
 }
 
 export function bankById(id: string | null | undefined): Bank | null {
-  return BANKS.find((b) => b.id === id) ?? null;
+  return BANKS.find((b) => b.id === id) ?? null
 }

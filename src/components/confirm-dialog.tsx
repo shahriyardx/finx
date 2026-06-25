@@ -1,41 +1,41 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react'
+import { Modal, Pressable, StyleSheet, View } from 'react-native'
 
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { ThemedText } from '@/components/themed-text'
+import { Spacing } from '@/constants/theme'
+import { useTheme } from '@/hooks/use-theme'
 
 type ConfirmOptions = {
-  title: string;
-  message?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  destructive?: boolean;
-};
+  title: string
+  message?: string
+  confirmLabel?: string
+  cancelLabel?: string
+  destructive?: boolean
+}
 
-type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
+type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>
 
-const ConfirmContext = createContext<ConfirmFn | null>(null);
+const ConfirmContext = createContext<ConfirmFn | null>(null)
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
-  const theme = useTheme();
-  const [opts, setOpts] = useState<ConfirmOptions | null>(null);
-  const resolver = useRef<((v: boolean) => void) | null>(null);
+  const theme = useTheme()
+  const [opts, setOpts] = useState<ConfirmOptions | null>(null)
+  const resolver = useRef<((v: boolean) => void) | null>(null)
 
   const confirm = useCallback<ConfirmFn>((o) => {
-    setOpts(o);
+    setOpts(o)
     return new Promise<boolean>((resolve) => {
-      resolver.current = resolve;
-    });
-  }, []);
+      resolver.current = resolve
+    })
+  }, [])
 
   const close = (value: boolean) => {
-    resolver.current?.(value);
-    resolver.current = null;
-    setOpts(null);
-  };
+    resolver.current?.(value)
+    resolver.current = null
+    setOpts(null)
+  }
 
-  const destructive = opts?.destructive ?? true;
+  const destructive = opts?.destructive ?? true
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -72,13 +72,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         </Pressable>
       </Modal>
     </ConfirmContext.Provider>
-  );
+  )
 }
 
 export function useConfirm(): ConfirmFn {
-  const ctx = useContext(ConfirmContext);
-  if (!ctx) throw new Error('useConfirm must be used within ConfirmProvider');
-  return ctx;
+  const ctx = useContext(ConfirmContext)
+  if (!ctx) throw new Error('useConfirm must be used within ConfirmProvider')
+  return ctx
 }
 
 const styles = StyleSheet.create({
@@ -102,4 +102,4 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: Spacing.two, marginTop: Spacing.two },
   btn: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
   btnText: { fontWeight: '700' },
-});
+})

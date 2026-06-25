@@ -9,46 +9,46 @@
  */
 
 export type ParsedSms = {
-  type: 'income' | 'expense';
-  amount: number; // minor units (BDT * 100); for bKash the fee is folded in
-  balance?: number; // minor units, the bank's stated balance (informational)
-  note?: string; // e.g. "ATM TXN"
-};
+  type: 'income' | 'expense'
+  amount: number // minor units (BDT * 100); for bKash the fee is folded in
+  balance?: number // minor units, the bank's stated balance (informational)
+  note?: string // e.g. "ATM TXN"
+}
 
-const INCOME_WORDS = ['deposit', 'credit', 'received', 'refund'];
-const EXPENSE_WORDS = ['purchased', 'withdrawal', 'payment', 'debit', 'spent', 'purchase'];
+const INCOME_WORDS = ['deposit', 'credit', 'received', 'refund']
+const EXPENSE_WORDS = ['purchased', 'withdrawal', 'payment', 'debit', 'spent', 'purchase']
 
 function toMinor(raw: string): number {
-  return Math.round(Number(raw.replace(/,/g, '')) * 100);
+  return Math.round(Number(raw.replace(/,/g, '')) * 100)
 }
 
 export function parseCityBankSms(body: string): ParsedSms | null {
-  const lower = body.toLowerCase();
+  const lower = body.toLowerCase()
   const type: ParsedSms['type'] | null = INCOME_WORDS.some((w) => lower.includes(w))
     ? 'income'
     : EXPENSE_WORDS.some((w) => lower.includes(w))
       ? 'expense'
-      : null;
-  if (!type) return null;
+      : null
+  if (!type) return null
 
   // The transaction amount is the first "Tk. N" that is NOT the balance line.
-  const balanceMatch = body.match(/Tk\.?\s*([\d,]+(?:\.\d+)?)\s*Balance/i);
-  const balance = balanceMatch ? toMinor(balanceMatch[1]) : undefined;
+  const balanceMatch = body.match(/Tk\.?\s*([\d,]+(?:\.\d+)?)\s*Balance/i)
+  const balance = balanceMatch ? toMinor(balanceMatch[1]) : undefined
 
   // City Bank prints the transaction amount first, the balance after it.
-  const amounts = [...body.matchAll(/Tk\.?\s*([\d,]+(?:\.\d+)?)/gi)].map((m) => toMinor(m[1]));
-  const amount = amounts[0];
-  if (amount === undefined || amount <= 0) return null;
+  const amounts = [...body.matchAll(/Tk\.?\s*([\d,]+(?:\.\d+)?)/gi)].map((m) => toMinor(m[1]))
+  const amount = amounts[0]
+  if (amount === undefined || amount <= 0) return null
 
   // City Bank's second line is the transaction descriptor (e.g. "ATM TXN",
   // "E-COMM/POS TXN", "CITYTOUCH TXN") — use it as the note.
   const lines = body
     .split('\n')
     .map((l) => l.trim())
-    .filter(Boolean);
-  const note = lines[1];
+    .filter(Boolean)
+  const note = lines[1]
 
-  return { type, amount, balance, note };
+  return { type, amount, balance, note }
 }
 
 /**
@@ -61,8 +61,8 @@ export function parseCityBankSms(body: string): ParsedSms | null {
  *   "You have received remittance. Total: Tk 21,525.00 ..."
  * The transaction amount is always the first "Tk N"; Fee/Balance are labelled.
  */
-const BKASH_INCOME = ['received', 'cash in', 'cashback', 'deposit', 'remittance', 'add money', 'refund'];
-const BKASH_EXPENSE = ['payment of', 'cash out', 'bill', 'send money', 'sent', 'paid'];
+const BKASH_INCOME = ['received', 'cash in', 'cashback', 'deposit', 'remittance', 'add money', 'refund']
+const BKASH_EXPENSE = ['payment of', 'cash out', 'bill', 'send money', 'sent', 'paid']
 
 // Transaction kind → friendly note. First match (in order) wins, so more
 // specific phrases come before generic ones.
@@ -78,33 +78,33 @@ const BKASH_KINDS: [RegExp, string][] = [
   [/payment\s*of|\bpayment\b|\bpaid\b/i, 'Payment'],
   [/received/i, 'Money Received'],
   [/refund/i, 'Refund'],
-];
+]
 
 function bkashNote(body: string): string | undefined {
   for (const [re, label] of BKASH_KINDS) {
-    if (re.test(body)) return label;
+    if (re.test(body)) return label
   }
-  return undefined;
+  return undefined
 }
 
 export function parseBkashSms(body: string): ParsedSms | null {
-  const lower = body.toLowerCase();
+  const lower = body.toLowerCase()
   const type: ParsedSms['type'] | null = BKASH_INCOME.some((w) => lower.includes(w))
     ? 'income'
     : BKASH_EXPENSE.some((w) => lower.includes(w))
       ? 'expense'
-      : null;
-  if (!type) return null;
+      : null
+  if (!type) return null
 
-  const amounts = [...body.matchAll(/Tk\.?\s*([\d,]+(?:\.\d+)?)/gi)].map((m) => toMinor(m[1]));
-  const amount = amounts[0];
-  if (amount === undefined || amount <= 0) return null;
+  const amounts = [...body.matchAll(/Tk\.?\s*([\d,]+(?:\.\d+)?)/gi)].map((m) => toMinor(m[1]))
+  const amount = amounts[0]
+  if (amount === undefined || amount <= 0) return null
 
   // Fee is ignored on bKash — the transaction amount already accounts for it.
-  const balMatch = body.match(/Balance:?\s*Tk\.?\s*([\d,]+(?:\.\d+)?)/i);
-  const balance = balMatch ? toMinor(balMatch[1]) : undefined;
+  const balMatch = body.match(/Balance:?\s*Tk\.?\s*([\d,]+(?:\.\d+)?)/i)
+  const balance = balMatch ? toMinor(balMatch[1]) : undefined
 
-  return { type, amount, balance, note: bkashNote(body) };
+  return { type, amount, balance, note: bkashNote(body) }
 }
 
 /**
@@ -118,35 +118,35 @@ export function parseBkashSms(body: string): ParsedSms | null {
  *   "Your NPS transfer request to Md Shahriyar Alam amount BDT 3,300.00 has been processed ..."
  *   "BDT 33,000.00 was deposited to Acc. ending xxx3901. Available balance is now BDT 39,181.30"
  */
-const SC_INCOME = ['credited', 'deposited', 'received', 'refund', 'money back'];
-const SC_EXPENSE = ['transaction', 'paid', 'debited', 'transfer', 'withdrawn', 'purchase'];
+const SC_INCOME = ['credited', 'deposited', 'received', 'refund', 'money back']
+const SC_EXPENSE = ['transaction', 'paid', 'debited', 'transfer', 'withdrawn', 'purchase']
 
 export function parseStanChartSms(body: string): ParsedSms | null {
-  const lower = body.toLowerCase();
+  const lower = body.toLowerCase()
   const type: ParsedSms['type'] | null = SC_INCOME.some((w) => lower.includes(w))
     ? 'income'
     : SC_EXPENSE.some((w) => lower.includes(w))
       ? 'expense'
-      : null;
-  if (!type) return null;
+      : null
+  if (!type) return null
 
-  const amounts = [...body.matchAll(/BDT\s*([\d,]+(?:\.\d+)?)/gi)].map((m) => toMinor(m[1]));
-  const amount = amounts[0];
-  if (amount === undefined || amount <= 0) return null;
+  const amounts = [...body.matchAll(/BDT\s*([\d,]+(?:\.\d+)?)/gi)].map((m) => toMinor(m[1]))
+  const amount = amounts[0]
+  if (amount === undefined || amount <= 0) return null
 
-  const balMatch = body.match(/Available\s+(?:credit|balance)(?:\s+is\s+now)?:?\s*BDT\s*([\d,]+(?:\.\d+)?)/i);
-  const balance = balMatch ? toMinor(balMatch[1]) : undefined;
+  const balMatch = body.match(/Available\s+(?:credit|balance)(?:\s+is\s+now)?:?\s*BDT\s*([\d,]+(?:\.\d+)?)/i)
+  const balance = balMatch ? toMinor(balMatch[1]) : undefined
 
   // Best-effort note: merchant ("at X on/using"), reason ("pertaining to X."),
   // transfer recipient, or a deposit label.
-  const at = body.match(/\bat\s+(.+?)\s+(?:on|using)\b/i);
-  const pertaining = body.match(/pertaining to\s+(.+?)[.\n]/i);
-  const transferTo = body.match(/transfer request to\s+(.+?)\s+amount/i);
-  let note: string | undefined;
-  if (at) note = at[1].trim();
-  else if (pertaining) note = pertaining[1].trim();
-  else if (transferTo) note = `Transfer to ${transferTo[1].trim()}`;
-  else if (/deposited/i.test(body)) note = 'Deposit';
+  const at = body.match(/\bat\s+(.+?)\s+(?:on|using)\b/i)
+  const pertaining = body.match(/pertaining to\s+(.+?)[.\n]/i)
+  const transferTo = body.match(/transfer request to\s+(.+?)\s+amount/i)
+  let note: string | undefined
+  if (at) note = at[1].trim()
+  else if (pertaining) note = pertaining[1].trim()
+  else if (transferTo) note = `Transfer to ${transferTo[1].trim()}`
+  else if (/deposited/i.test(body)) note = 'Deposit'
 
-  return { type, amount, balance, note };
+  return { type, amount, balance, note }
 }

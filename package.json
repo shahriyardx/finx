@@ -41,12 +41,11 @@
     "react-native-worklets": "0.8.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.1",
     "@types/crypto-js": "^4.2.2",
     "@types/react": "~19.2.2",
     "babel-plugin-inline-import": "^3.0.0",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^9.0.0",
-    "eslint-config-expo": "~56.0.4",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -55,7 +54,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint",
+    "lint": "biome check ./src",
+    "format": "biome check --write ./src",
     "db:generate": "drizzle-kit generate"
   },
   "private": true

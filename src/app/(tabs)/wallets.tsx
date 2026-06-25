@@ -1,25 +1,25 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { useRouter } from 'expo-router'
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { EmptyState } from '@/components/empty-state';
-import { Money } from '@/components/money';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WalletCard } from '@/components/wallet-card';
-import { Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { wallets } from '@/db/schema';
-import { useTheme } from '@/hooks/use-theme';
+import { EmptyState } from '@/components/empty-state'
+import { Money } from '@/components/money'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { WalletCard } from '@/components/wallet-card'
+import { Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { wallets } from '@/db/schema'
+import { useTheme } from '@/hooks/use-theme'
 
 export default function WalletsScreen() {
-  const theme = useTheme();
-  const router = useRouter();
-  const { data } = useLiveQuery(db.select().from(wallets));
-  const list = data ?? [];
-  const total = list.reduce((s, w) => s + w.balance, 0);
+  const theme = useTheme()
+  const router = useRouter()
+  const { data } = useLiveQuery(db.select().from(wallets))
+  const list = data ?? []
+  const total = list.reduce((s, w) => s + w.balance, 0)
 
   return (
     <ThemedView style={styles.container}>
@@ -72,7 +72,7 @@ export default function WalletsScreen() {
         </SafeAreaView>
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -98,4 +98,4 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
   },
   list: { gap: Spacing.two, marginTop: Spacing.two },
-});
+})

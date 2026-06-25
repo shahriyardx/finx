@@ -1,23 +1,23 @@
-import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image'
+import { StyleSheet, View } from 'react-native'
 
-import { ThemedText } from '@/components/themed-text';
-import { useTheme } from '@/hooks/use-theme';
+import { ThemedText } from '@/components/themed-text'
+import { useTheme } from '@/hooks/use-theme'
 
 type Props = {
-  name: string;
-  uri?: string | null;
-  size?: number;
-  color?: string;
-};
+  name: string
+  uri?: string | null
+  size?: number
+  color?: string
+}
 
 /** Person avatar: photo when available, else colored circle with first letter. */
 export function Avatar({ name, uri, size = 44, color }: Props) {
-  const theme = useTheme();
-  const radius = size / 2;
+  const theme = useTheme()
+  const radius = size / 2
 
   if (uri) {
-    return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: radius }} contentFit="cover" />;
+    return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: radius }} contentFit="cover" />
   }
 
   return (
@@ -30,9 +30,9 @@ export function Avatar({ name, uri, size = 44, color }: Props) {
         {name.trim().charAt(0).toUpperCase() || '?'}
       </ThemedText>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   fallback: { alignItems: 'center', justifyContent: 'center' },
-});
+})

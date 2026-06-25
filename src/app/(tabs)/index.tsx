@@ -1,79 +1,83 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { desc, gte } from 'drizzle-orm';
-import { useLiveQuery } from 'drizzle-orm/expo-sqlite';
-import { Link, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+import { desc, gte } from 'drizzle-orm'
+import { useLiveQuery } from 'drizzle-orm/expo-sqlite'
+import { Link, useRouter } from 'expo-router'
+import { useMemo, useState } from 'react'
+import {
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { Money } from '@/components/money';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { TransactionRow } from '@/components/transaction-row';
-import { Brand, Spacing } from '@/constants/theme';
-import { db } from '@/db/client';
-import { transactions, wallets } from '@/db/schema';
-import { useCurrency } from '@/hooks/use-currency';
-import { useTheme } from '@/hooks/use-theme';
+import { Money } from '@/components/money'
+import { ThemedText } from '@/components/themed-text'
+import { ThemedView } from '@/components/themed-view'
+import { TransactionRow } from '@/components/transaction-row'
+import { Brand, Spacing } from '@/constants/theme'
+import { db } from '@/db/client'
+import { transactions, wallets } from '@/db/schema'
+import { useCurrency } from '@/hooks/use-currency'
+import { useTheme } from '@/hooks/use-theme'
 
 function monthStart(): number {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  const d = new Date()
+  return new Date(d.getFullYear(), d.getMonth(), 1).getTime()
 }
 
 /** Pick readable text (dark forest vs white) for a card tinted with `hex`. */
 function readableText(hex: string): string {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return '#ffffff';
-  const n = parseInt(m[1], 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return '#ffffff'
+  const n = parseInt(m[1], 16)
+  const r = (n >> 16) & 255
+  const g = (n >> 8) & 255
+  const b = n & 255
   // Relative luminance (sRGB) — bright cards get dark text.
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.6 ? Brand.forest : '#ffffff';
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return lum > 0.6 ? Brand.forest : '#ffffff'
 }
 
 type Card = {
-  key: string;
-  walletId?: number;
-  label: string;
-  bg: string;
-  text: string;
-  accent: string; // muted label color
-  iconBg: string;
-  balance: number;
-  income: number;
-  spend: number;
-};
+  key: string
+  walletId?: number
+  label: string
+  bg: string
+  text: string
+  accent: string // muted label color
+  iconBg: string
+  balance: number
+  income: number
+  spend: number
+}
 
 export default function Dashboard() {
-  const theme = useTheme();
-  const router = useRouter();
-  const currency = useCurrency();
-  const { data: walletRows } = useLiveQuery(db.select().from(wallets));
-  const { data: monthTxns } = useLiveQuery(
-    db.select().from(transactions).where(gte(transactions.date, monthStart())),
-  );
-  const { data: recent } = useLiveQuery(
-    db.select().from(transactions).orderBy(desc(transactions.date)).limit(6),
-  );
+  const theme = useTheme()
+  const router = useRouter()
+  const currency = useCurrency()
+  const { data: walletRows } = useLiveQuery(db.select().from(wallets))
+  const { data: monthTxns } = useLiveQuery(db.select().from(transactions).where(gte(transactions.date, monthStart())))
+  const { data: recent } = useLiveQuery(db.select().from(transactions).orderBy(desc(transactions.date)).limit(6))
 
-  const total = (walletRows ?? []).reduce((s, w) => s + w.balance, 0);
-  const income = (monthTxns ?? []).filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const spend = (monthTxns ?? []).filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const total = (walletRows ?? []).reduce((s, w) => s + w.balance, 0)
+  const income = (monthTxns ?? []).filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const spend = (monthTxns ?? []).filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
 
-  const [cardWidth, setCardWidth] = useState(0);
-  const [page, setPage] = useState(0);
+  const [cardWidth, setCardWidth] = useState(0)
+  const [page, setPage] = useState(0)
 
   // Total card first, then one tinted card per wallet with its own month stats.
   const cards = useMemo<Card[]>(() => {
-    const perWallet = new Map<number, { income: number; spend: number }>();
+    const perWallet = new Map<number, { income: number; spend: number }>()
     for (const t of monthTxns ?? []) {
-      const s = perWallet.get(t.walletId) ?? { income: 0, spend: 0 };
-      if (t.type === 'income') s.income += t.amount;
-      else s.spend += t.amount;
-      perWallet.set(t.walletId, s);
+      const s = perWallet.get(t.walletId) ?? { income: 0, spend: 0 }
+      if (t.type === 'income') s.income += t.amount
+      else s.spend += t.amount
+      perWallet.set(t.walletId, s)
     }
     const totalCard: Card = {
       key: 'total',
@@ -85,11 +89,11 @@ export default function Dashboard() {
       balance: total,
       income,
       spend,
-    };
+    }
     const walletCards: Card[] = (walletRows ?? []).map((w) => {
-      const s = perWallet.get(w.id) ?? { income: 0, spend: 0 };
-      const text = readableText(w.color);
-      const onWhite = text === '#ffffff';
+      const s = perWallet.get(w.id) ?? { income: 0, spend: 0 }
+      const text = readableText(w.color)
+      const onWhite = text === '#ffffff'
       return {
         key: `w${w.id}`,
         walletId: w.id,
@@ -101,19 +105,18 @@ export default function Dashboard() {
         balance: w.balance,
         income: s.income,
         spend: s.spend,
-      };
-    });
-    return [totalCard, ...walletCards];
-  }, [walletRows, monthTxns, total, income, spend, theme.hero, theme.heroText, theme.heroAccent]);
+      }
+    })
+    return [totalCard, ...walletCards]
+  }, [walletRows, monthTxns, total, income, spend, theme.hero, theme.heroText, theme.heroAccent])
 
   // Cards are narrower than the viewport so the next one peeks on the right.
-  const CARD_GAP = Spacing.three;
-  const onCarouselLayout = (e: LayoutChangeEvent) =>
-    setCardWidth(Math.round(e.nativeEvent.layout.width * 0.84));
-  const snap = cardWidth + CARD_GAP;
+  const CARD_GAP = Spacing.three
+  const onCarouselLayout = (e: LayoutChangeEvent) => setCardWidth(Math.round(e.nativeEvent.layout.width * 0.84))
+  const snap = cardWidth + CARD_GAP
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (snap > 0) setPage(Math.round(e.nativeEvent.contentOffset.x / snap));
-  };
+    if (snap > 0) setPage(Math.round(e.nativeEvent.contentOffset.x / snap))
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -196,7 +199,10 @@ export default function Dashboard() {
                   key={i}
                   style={[
                     styles.dot,
-                    { backgroundColor: i === page ? theme.accent : theme.textSecondary, opacity: i === page ? 1 : 0.35 },
+                    {
+                      backgroundColor: i === page ? theme.accent : theme.textSecondary,
+                      opacity: i === page ? 1 : 0.35,
+                    },
                   ]}
                 />
               ))}
@@ -252,7 +258,7 @@ export default function Dashboard() {
         </SafeAreaView>
       </ScrollView>
     </ThemedView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -277,7 +283,14 @@ const styles = StyleSheet.create({
   cardLabel: { paddingRight: Spacing.five },
   heroAmount: { fontSize: 40, fontWeight: '700', lineHeight: 46 },
   carouselCard: { marginTop: 0 },
-  addCard: { alignItems: 'center', justifyContent: 'center', gap: Spacing.three, borderWidth: 2, borderStyle: 'dashed', backgroundColor: 'transparent' },
+  addCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.three,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    backgroundColor: 'transparent',
+  },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: Spacing.one, marginTop: Spacing.two },
   dot: { width: 7, height: 7, borderRadius: 4 },
   heroSplit: { flexDirection: 'row', gap: Spacing.four },
@@ -305,4 +318,4 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 24, lineHeight: 30 },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
   empty: { paddingVertical: Spacing.four, textAlign: 'center' },
-});
+})
