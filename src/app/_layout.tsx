@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { AuthProvider } from '@/auth/auth-context'
 import { ConfirmProvider } from '@/components/confirm-dialog'
 import { LockOverlay } from '@/components/lock-overlay'
+import { NotificationRouter } from '@/components/notification-router'
 import { SmsImporter } from '@/components/sms-importer'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
@@ -92,6 +93,7 @@ export default function RootLayout() {
           <ConfirmProvider>
             <RootNavigator />
             <SmsImporter />
+            <NotificationRouter />
             <LockOverlay />
             <StatusBar style="auto" />
           </ConfirmProvider>

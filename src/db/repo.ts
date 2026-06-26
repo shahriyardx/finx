@@ -59,22 +59,26 @@ export async function addTransaction(input: {
   date?: number
 }) {
   const delta = input.type === 'income' ? input.amount : -input.amount
-  await db.transaction(async (tx) => {
-    await tx.insert(transactions).values({
-      walletId: input.walletId,
-      type: input.type,
-      amount: input.amount,
-      category: input.category ?? 'other',
-      note: input.note,
-      receipt: input.receipt ?? null,
-      smsBody: input.smsBody ?? null,
-      date: input.date ?? now(),
-      createdAt: now(),
-    })
+  return await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(transactions)
+      .values({
+        walletId: input.walletId,
+        type: input.type,
+        amount: input.amount,
+        category: input.category ?? 'other',
+        note: input.note,
+        receipt: input.receipt ?? null,
+        smsBody: input.smsBody ?? null,
+        date: input.date ?? now(),
+        createdAt: now(),
+      })
+      .returning({ id: transactions.id })
     await tx
       .update(wallets)
       .set({ balance: sql`${wallets.balance} + ${delta}` })
       .where(eq(wallets.id, input.walletId))
+    return row.id
   })
 }
 

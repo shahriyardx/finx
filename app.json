@@ -60,7 +60,13 @@
           "contactsPermission": "Allow FinX to access contacts to fill a person's phone number."
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-notifications",
+        {
+          "color": "#163300"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

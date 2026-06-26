@@ -4,9 +4,10 @@ import { useEffect, useRef } from 'react'
 import { PermissionsAndroid, Platform } from 'react-native'
 
 import { db } from '@/db/client'
-import { addTransaction, findWalletBySmsSender } from '@/db/repo'
+import { addTransaction, findWalletBySmsSender, getSetting } from '@/db/repo'
 import { settings } from '@/db/schema'
 import { bankForSender } from '@/lib/banks'
+import { ensureNotificationPermission, notifyTxImported, setupNotifications } from '@/lib/notifications'
 import { addSmsListener, isSmsListenerAvailable } from '../../modules/sms-listener'
 
 export const SMS_IMPORT_KEY = 'sms_import'
@@ -32,6 +33,10 @@ export function SmsImporter() {
       const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECEIVE_SMS)
       if (cancelled || granted !== PermissionsAndroid.RESULTS.GRANTED) return
 
+      await setupNotifications()
+      await ensureNotificationPermission()
+      if (cancelled) return
+
       sub = addSmsListener(({ sender, body }) => {
         const bank = bankForSender(sender)
         if (!bank) return // sender not a known bank
@@ -46,13 +51,22 @@ export function SmsImporter() {
         ;(async () => {
           const wallet = await findWalletBySmsSender(bank.id)
           if (!wallet) return // no wallet mapped to this bank
-          await addTransaction({
+          const txId = await addTransaction({
             walletId: wallet.id,
             type: parsed.type,
             amount: parsed.amount,
             category: 'other',
             note: parsed.note,
             smsBody: body,
+          })
+          const currency = (await getSetting('currency')) ?? undefined
+          await notifyTxImported({
+            txId,
+            type: parsed.type,
+            amount: parsed.amount,
+            walletName: wallet.name,
+            note: parsed.note,
+            currency,
           })
         })()
       })
