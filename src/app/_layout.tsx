@@ -12,6 +12,7 @@ import { RecurringRunner } from '@/components/recurring-runner'
 import { SmsImporter } from '@/components/sms-importer'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
+import { WidgetUpdater } from '@/components/widget-updater'
 import { Brand, Spacing } from '@/constants/theme'
 import { db } from '@/db/client'
 import migrations from '@/db/migrations'
@@ -101,6 +102,7 @@ export default function RootLayout() {
             <RootNavigator />
             <SmsImporter />
             <RecurringRunner />
+            <WidgetUpdater />
             <NotificationRouter />
             <LockOverlay />
             <StatusBar style="auto" />

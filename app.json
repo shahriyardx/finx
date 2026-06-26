@@ -66,6 +66,25 @@
         {
           "color": "#163300"
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": ["./assets/fonts/MaterialCommunityIcons.ttf"],
+          "widgets": [
+            {
+              "name": "Balance",
+              "label": "FinX Balance",
+              "description": "Your total balance",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
       ]
     ],
     "experiments": {
