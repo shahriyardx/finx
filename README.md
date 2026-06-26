@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.png" alt="FinX — personal finance tracker" width="100%" />
+</p>
+
 # FinX
 
 A simple money tracker for your phone. Keep an eye on what you earn, what you
