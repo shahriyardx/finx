@@ -1,3 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
   <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
+  <application>
+    <!-- Manifest-declared so incoming SMS are delivered even when the app is killed. -->
+    <receiver
+      android:name="expo.modules.smslistener.SmsReceiver"
+      android:exported="true"
+      android:permission="android.permission.BROADCAST_SMS">
+      <intent-filter android:priority="999">
+        <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+      </intent-filter>
+    </receiver>
+
+    <service
+      android:name="expo.modules.smslistener.SmsHeadlessTaskService"
+      android:exported="false" />
+  </application>
 </manifest>

@@ -16,3 +16,10 @@ android {
     abortOnError false
   }
 }
+
+dependencies {
+  // Replaced with `com.facebook.react:react-android:$version` by the RN gradle
+  // plugin. Needed for HeadlessJsTaskService used by the SMS headless import.
+  //noinspection GradleDynamicVersion
+  implementation "com.facebook.react:react-native:+"
+}
