@@ -38,6 +38,7 @@ function RootNavigator() {
       <Stack.Screen name="person/[id]" options={{ headerShown: true, title: 'Person' }} />
       <Stack.Screen name="debt/[id]" options={{ headerShown: true, title: 'Debt' }} />
       <Stack.Screen name="recurring" options={{ headerShown: true, title: 'Recurring' }} />
+      <Stack.Screen name="reports" options={{ headerShown: true, title: 'Reports' }} />
       <Stack.Screen
         name="modals/transaction-form"
         options={{ presentation: 'modal', headerShown: true, title: 'New transaction' }}

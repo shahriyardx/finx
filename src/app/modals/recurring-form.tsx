@@ -27,7 +27,7 @@ export default function RecurringForm() {
   const theme = useTheme()
   const router = useRouter()
   const navigation = useNavigation()
-  const params = useLocalSearchParams<{ id?: string }>()
+  const params = useLocalSearchParams<{ id?: string; walletId?: string }>()
   const editId = params.id ? Number(params.id) : null
   const { data: walletRows } = useLiveQuery(db.select().from(wallets))
   const list = walletRows ?? []
@@ -43,7 +43,7 @@ export default function RecurringForm() {
 
   const [type, setType] = useState<Type>('expense')
   const [amount, setAmount] = useState('')
-  const [walletId, setWalletId] = useState<number | null>(null)
+  const [walletId, setWalletId] = useState<number | null>(params.walletId ? Number(params.walletId) : null)
   const [category, setCategory] = useState('other')
   const [note, setNote] = useState('')
   const [frequency, setFrequency] = useState<Frequency>('monthly')

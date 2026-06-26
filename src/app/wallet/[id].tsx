@@ -117,19 +117,21 @@ export default function WalletDetail() {
             Balance
           </ThemedText>
           <Money value={wallet.balance} themeColor="heroText" style={styles.heroAmount} />
-        </View>
 
-        <View style={styles.actions}>
-          <Pressable
-            onPress={() => router.push(`/modals/transaction-form?walletId=${walletId}`)}
-            style={[styles.action, { backgroundColor: theme.accent }]}>
-            <ThemedText style={{ color: theme.onAccent, fontWeight: '700' }}>+ Transaction</ThemedText>
-          </Pressable>
-          <Pressable
-            onPress={() => router.push(`/modals/transfer-form?fromWalletId=${walletId}`)}
-            style={[styles.action, { backgroundColor: theme.backgroundElement }]}>
-            <ThemedText style={{ color: theme.text, fontWeight: '700' }}>Transfer</ThemedText>
-          </Pressable>
+          <View style={styles.actions}>
+            <Pressable
+              onPress={() => router.push(`/modals/transfer-form?fromWalletId=${walletId}`)}
+              style={[styles.action, styles.actionAlt]}>
+              <MaterialCommunityIcons name="swap-horizontal" size={18} color={theme.heroText} />
+              <ThemedText style={{ color: theme.heroText, fontWeight: '700' }}>Transfer</ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push(`/modals/recurring-form?walletId=${walletId}`)}
+              style={[styles.action, styles.actionAlt]}>
+              <MaterialCommunityIcons name="calendar-sync" size={18} color={theme.heroText} />
+              <ThemedText style={{ color: theme.heroText, fontWeight: '700' }}>Recurring</ThemedText>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.sectionHead}>
@@ -202,8 +204,17 @@ const styles = StyleSheet.create({
   content: { padding: Spacing.three, gap: Spacing.three, paddingBottom: Spacing.six },
   hero: { borderRadius: Spacing.four, padding: Spacing.four, gap: Spacing.one },
   heroAmount: { fontSize: 36, fontWeight: '700', lineHeight: 42 },
-  actions: { flexDirection: 'row', gap: Spacing.three },
-  action: { flex: 1, paddingVertical: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
+  actions: { flexDirection: 'row', gap: Spacing.three, marginTop: Spacing.three },
+  action: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.one,
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  actionAlt: { backgroundColor: 'rgba(255,255,255,0.14)' },
   sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: Spacing.two },
   sectionTitle: { fontSize: 24, lineHeight: 30 },
   period: { flexDirection: 'row', alignItems: 'center', gap: 1 },

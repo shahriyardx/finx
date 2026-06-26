@@ -182,20 +182,28 @@ export default function ActivityScreen() {
       </SafeAreaView>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* income / expense for the period */}
+        {/* income / expense for the period + reports shortcut */}
         <View style={styles.summary}>
-          <View style={styles.summaryCol}>
-            <ThemedText type="small" themeColor="textSecondary">
-              Income
-            </ThemedText>
-            <Money value={income} themeColor="income" type="smallBold" />
+          <View style={styles.summaryGroup}>
+            <View style={styles.summaryCol}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Income
+              </ThemedText>
+              <Money value={income} themeColor="income" type="smallBold" />
+            </View>
+            <View style={styles.summaryCol}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Expense
+              </ThemedText>
+              <Money value={spent} themeColor="expense" type="smallBold" />
+            </View>
           </View>
-          <View style={[styles.summaryCol, { alignItems: 'flex-end' }]}>
-            <ThemedText type="small" themeColor="textSecondary">
-              Expense
-            </ThemedText>
-            <Money value={spent} themeColor="expense" type="smallBold" />
-          </View>
+          <Pressable
+            onPress={() => router.push('/reports')}
+            hitSlop={8}
+            style={[styles.insights, { backgroundColor: theme.backgroundElement }]}>
+            <MaterialCommunityIcons name="chart-box-outline" size={22} color={theme.accent} />
+          </Pressable>
         </View>
 
         {rows.length === 0 ? (
@@ -352,8 +360,10 @@ const styles = StyleSheet.create({
   filterBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   filterDot: { position: 'absolute', top: 7, right: 7, width: 8, height: 8, borderRadius: 4 },
   content: { padding: Spacing.three, paddingBottom: Spacing.six, gap: Spacing.three },
-  summary: { flexDirection: 'row', justifyContent: 'space-between' },
+  summary: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  summaryGroup: { flexDirection: 'row', gap: Spacing.five },
   summaryCol: { gap: 2 },
+  insights: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   group: { gap: Spacing.one },
   groupLabel: { marginLeft: Spacing.one },
   card: { borderRadius: Spacing.three, paddingHorizontal: Spacing.three, paddingVertical: Spacing.one },
