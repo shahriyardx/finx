@@ -1,7 +1,18 @@
 import { and, eq, sql } from 'drizzle-orm'
 
 import { db } from '@/db/client'
-import { debtPayments, debts, type NewPerson, persons, settings, transactions, transfers, wallets } from '@/db/schema'
+import {
+  debtPayments,
+  debts,
+  type NewPerson,
+  persons,
+  recurring,
+  settings,
+  transactions,
+  transfers,
+  wallets,
+} from '@/db/schema'
+import { type Anchor, advance, type Frequency, firstOccurrence } from '@/lib/recurrence'
 
 /** Epoch-ms helper kept in one place so tests/screens stay consistent. */
 const now = () => Date.now()
@@ -201,6 +212,159 @@ export async function deleteTransfer(id: number) {
 }
 
 // ----------------------------------------------------------------------------
+// Recurring transactions — rules that auto-post on a schedule
+// ----------------------------------------------------------------------------
+
+export async function createRecurring(input: {
+  walletId: number
+  type: 'income' | 'expense'
+  amount: number
+  category?: string
+  note?: string | null
+  frequency: Frequency
+  interval?: number
+  // Anchor day: only the field for `frequency` is read (defaults to today's).
+  weekday?: number | null
+  dayOfMonth?: number | null
+  month?: number | null
+  endDate?: number | null
+  /** Post one transaction immediately, without disturbing the anchored schedule. */
+  postNow?: boolean
+}) {
+  const interval = Math.max(1, input.interval ?? 1)
+  const anchor: Anchor = { weekday: input.weekday, dayOfMonth: input.dayOfMonth, month: input.month }
+  const stamp = now()
+  let nextRun = firstOccurrence(stamp, input.frequency, anchor)
+
+  if (input.postNow) {
+    await addTransaction({
+      walletId: input.walletId,
+      type: input.type,
+      amount: input.amount,
+      category: input.category ?? 'other',
+      note: input.note ?? undefined,
+      date: stamp,
+    })
+    // If the first scheduled run is also today, skip it so the runner doesn't
+    // double-post on the same day.
+    if (nextRun <= stamp) nextRun = advance(nextRun, input.frequency, interval, anchor)
+  }
+
+  await db.insert(recurring).values({
+    walletId: input.walletId,
+    type: input.type,
+    amount: input.amount,
+    category: input.category ?? 'other',
+    note: input.note ?? null,
+    frequency: input.frequency,
+    interval,
+    weekday: input.weekday ?? null,
+    dayOfMonth: input.dayOfMonth ?? null,
+    month: input.month ?? null,
+    nextRun,
+    endDate: input.endDate ?? null,
+    lastPostedAt: input.postNow ? stamp : null,
+    active: 1,
+    createdAt: now(),
+  })
+}
+
+export async function updateRecurring(
+  id: number,
+  input: {
+    walletId?: number
+    type?: 'income' | 'expense'
+    amount?: number
+    category?: string
+    note?: string | null
+    frequency: Frequency
+    interval?: number
+    weekday?: number | null
+    dayOfMonth?: number | null
+    month?: number | null
+  },
+) {
+  const interval = Math.max(1, input.interval ?? 1)
+  const anchor: Anchor = { weekday: input.weekday, dayOfMonth: input.dayOfMonth, month: input.month }
+  // Editing the schedule re-anchors the next run from now.
+  await db
+    .update(recurring)
+    .set({
+      walletId: input.walletId,
+      type: input.type,
+      amount: input.amount,
+      category: input.category,
+      note: input.note,
+      frequency: input.frequency,
+      interval,
+      weekday: input.weekday ?? null,
+      dayOfMonth: input.dayOfMonth ?? null,
+      month: input.month ?? null,
+      nextRun: firstOccurrence(now(), input.frequency, anchor),
+    })
+    .where(eq(recurring.id, id))
+}
+
+export async function setRecurringActive(id: number, active: boolean) {
+  await db
+    .update(recurring)
+    .set({ active: active ? 1 : 0 })
+    .where(eq(recurring.id, id))
+}
+
+export async function deleteRecurring(id: number) {
+  await db.delete(recurring).where(eq(recurring.id, id))
+}
+
+/**
+ * Post every due occurrence of every active rule and advance its `nextRun`.
+ * Each elapsed period (catch-up after the app was closed) posts one transaction.
+ * A rule whose schedule passes its `endDate` is deactivated. Returns the count
+ * of transactions posted. Safe to call repeatedly (e.g. on app foreground).
+ */
+export async function runDueRecurring(): Promise<number> {
+  const stamp = now()
+  const rules = await db.select().from(recurring).where(eq(recurring.active, 1))
+  let posted = 0
+
+  for (const r of rules) {
+    let next = r.nextRun
+    let count = 0
+    // Cap iterations so a long-dormant rule can't post thousands of rows.
+    while (count < 120 && next <= stamp && (r.endDate == null || next <= r.endDate)) {
+      await addTransaction({
+        walletId: r.walletId,
+        type: r.type,
+        amount: r.amount,
+        category: r.category,
+        note: r.note ?? undefined,
+        date: next,
+      })
+      next = advance(next, r.frequency, r.interval, {
+        weekday: r.weekday,
+        dayOfMonth: r.dayOfMonth,
+        month: r.month,
+      })
+      count++
+    }
+
+    const ended = r.endDate != null && next > r.endDate
+    if (next !== r.nextRun || ended) {
+      await db
+        .update(recurring)
+        .set({
+          nextRun: next,
+          lastPostedAt: count > 0 ? stamp : r.lastPostedAt,
+          active: ended ? 0 : 1,
+        })
+        .where(eq(recurring.id, r.id))
+    }
+    posted += count
+  }
+  return posted
+}
+
+// ----------------------------------------------------------------------------
 // Persons
 // ----------------------------------------------------------------------------
 
@@ -390,22 +554,24 @@ export type BackupData = {
   persons: (typeof persons.$inferSelect)[]
   debts: (typeof debts.$inferSelect)[]
   debtPayments: (typeof debtPayments.$inferSelect)[]
+  recurring: (typeof recurring.$inferSelect)[]
   settings: (typeof settings.$inferSelect)[]
 }
 
 export async function exportData(): Promise<BackupData> {
-  const [w, t, tr, p, d, dp, s] = await Promise.all([
+  const [w, t, tr, p, d, dp, rec, s] = await Promise.all([
     db.select().from(wallets),
     db.select().from(transactions),
     db.select().from(transfers),
     db.select().from(persons),
     db.select().from(debts),
     db.select().from(debtPayments),
+    db.select().from(recurring),
     db.select().from(settings),
   ])
   return {
     app: 'finx',
-    version: 2,
+    version: 3,
     exportedAt: now(),
     wallets: w,
     transactions: t,
@@ -413,6 +579,7 @@ export async function exportData(): Promise<BackupData> {
     persons: p,
     debts: d,
     debtPayments: dp,
+    recurring: rec,
     settings: s,
   }
 }
@@ -443,10 +610,13 @@ export async function importData(raw: unknown): Promise<{
   const data = raw
   const all = sql`1 = 1`
   const transfersIn = Array.isArray(data.transfers) ? data.transfers : []
+  // `recurring` was added in v3; older backups omit it.
+  const recurringIn = Array.isArray(data.recurring) ? data.recurring : []
   await db.transaction(async (tx) => {
     // Wipe children → parents (FK order). WHERE 1=1 keeps live queries fresh.
     await tx.delete(debtPayments).where(all)
     await tx.delete(debts).where(all)
+    await tx.delete(recurring).where(all)
     await tx.delete(transfers).where(all)
     await tx.delete(transactions).where(all)
     await tx.delete(wallets).where(all)
@@ -460,6 +630,7 @@ export async function importData(raw: unknown): Promise<{
     if (data.debts.length) await tx.insert(debts).values(data.debts)
     if (data.transactions.length) await tx.insert(transactions).values(data.transactions)
     if (transfersIn.length) await tx.insert(transfers).values(transfersIn)
+    if (recurringIn.length) await tx.insert(recurring).values(recurringIn)
     if (data.debtPayments.length) await tx.insert(debtPayments).values(data.debtPayments)
   })
   return {

@@ -8,6 +8,7 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
+import { Select } from '@/components/ui/select'
 import { Spacing } from '@/constants/theme'
 import { db } from '@/db/client'
 import { addTransaction, updateTransaction } from '@/db/repo'
@@ -178,20 +179,7 @@ export default function TransactionForm() {
         <ThemedText type="small" themeColor="textSecondary">
           Category
         </ThemedText>
-        <View style={styles.chips}>
-          {categories.map((c) => (
-            <Pressable
-              key={c.key}
-              onPress={() => setCategory(c.key)}
-              style={[
-                styles.chip,
-                { backgroundColor: theme.backgroundElement },
-                category === c.key && { backgroundColor: theme.accent },
-              ]}>
-              <ThemedText style={{ color: category === c.key ? theme.onAccent : theme.text }}>{c.label}</ThemedText>
-            </Pressable>
-          ))}
-        </View>
+        <Select title="Category" options={categories} value={category} onChange={setCategory} />
 
         <ThemedText type="small" themeColor="textSecondary">
           Note (optional)

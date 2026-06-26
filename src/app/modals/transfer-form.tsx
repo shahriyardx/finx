@@ -7,11 +7,13 @@ import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native
 import { useConfirm } from '@/components/confirm-dialog'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
+import { Select } from '@/components/ui/select'
 import { Spacing } from '@/constants/theme'
 import { db } from '@/db/client'
 import { createTransfer } from '@/db/repo'
 import { wallets } from '@/db/schema'
 import { useTheme } from '@/hooks/use-theme'
+import type { WalletIconName } from '@/lib/categories'
 import { parseMoney } from '@/lib/format'
 
 export default function TransferForm() {
@@ -30,7 +32,8 @@ export default function TransferForm() {
 
   const from = fromId ?? list[0]?.id ?? null
   const minor = useMemo(() => parseMoney(amount), [amount])
-  const canSave = minor > 0 && from !== null && toId !== null && from !== toId && !saving
+  const sameWallet = from !== null && toId !== null && from === toId
+  const canSave = minor > 0 && from !== null && toId !== null && !sameWallet && !saving
 
   const save = async () => {
     if (!canSave || from === null || toId === null) return
@@ -61,27 +64,7 @@ export default function TransferForm() {
     )
   }
 
-  const renderChips = (selected: number | null, onPick: (id: number) => void, disabledId: number | null) => (
-    <View style={styles.chips}>
-      {list.map((w) => {
-        const disabled = w.id === disabledId
-        const active = selected === w.id
-        return (
-          <Pressable
-            key={w.id}
-            disabled={disabled}
-            onPress={() => onPick(w.id)}
-            style={[
-              styles.chip,
-              { backgroundColor: theme.backgroundElement, opacity: disabled ? 0.35 : 1 },
-              active && { backgroundColor: theme.accent },
-            ]}>
-            <ThemedText style={{ color: active ? theme.onAccent : theme.text }}>{w.name}</ThemedText>
-          </Pressable>
-        )
-      })}
-    </View>
-  )
+  const options = list.map((w) => ({ key: String(w.id), label: w.name, icon: w.icon as WalletIconName }))
 
   return (
     <ThemedView style={styles.container}>
@@ -102,19 +85,32 @@ export default function TransferForm() {
           style={[styles.amount, { color: theme.text, backgroundColor: theme.backgroundElement }]}
         />
 
-        <ThemedText type="small" themeColor="textSecondary">
-          From
-        </ThemedText>
-        {renderChips(from, setFromId, toId)}
+        <View style={[styles.separator, { backgroundColor: theme.border }]} />
+
+        <Select
+          title="From wallet"
+          placeholder="From wallet"
+          options={options}
+          value={from !== null ? String(from) : ''}
+          onChange={(k) => setFromId(Number(k))}
+        />
 
         <View style={styles.arrowRow}>
           <MaterialCommunityIcons name="arrow-down" size={22} color={theme.textSecondary} />
         </View>
 
-        <ThemedText type="small" themeColor="textSecondary">
-          To
-        </ThemedText>
-        {renderChips(toId, setToId, from)}
+        <Select
+          title="To wallet"
+          placeholder="To wallet"
+          options={options}
+          value={toId !== null ? String(toId) : ''}
+          onChange={(k) => setToId(Number(k))}
+        />
+        {sameWallet ? (
+          <ThemedText type="small" style={{ color: theme.expense }}>
+            From and To can’t be the same wallet.
+          </ThemedText>
+        ) : null}
 
         <ThemedText type="small" themeColor="textSecondary">
           Note (optional)
@@ -149,8 +145,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.two,
   },
   input: { borderRadius: Spacing.three, padding: Spacing.three, fontSize: 16, marginBottom: Spacing.two },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two, marginBottom: Spacing.one },
-  chip: { paddingHorizontal: Spacing.three, paddingVertical: Spacing.two, borderRadius: Spacing.four },
+  separator: { height: StyleSheet.hairlineWidth, marginVertical: Spacing.two },
   arrowRow: { alignItems: 'center', paddingVertical: Spacing.one },
   save: { marginTop: Spacing.three, padding: Spacing.three, borderRadius: Spacing.three, alignItems: 'center' },
   empty: { textAlign: 'center', paddingVertical: Spacing.four },

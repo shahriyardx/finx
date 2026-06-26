@@ -8,6 +8,7 @@ import { AuthProvider } from '@/auth/auth-context'
 import { ConfirmProvider } from '@/components/confirm-dialog'
 import { LockOverlay } from '@/components/lock-overlay'
 import { NotificationRouter } from '@/components/notification-router'
+import { RecurringRunner } from '@/components/recurring-runner'
 import { SmsImporter } from '@/components/sms-importer'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
@@ -36,6 +37,7 @@ function RootNavigator() {
       <Stack.Screen name="transaction/[id]" options={{ headerShown: true, title: 'Transaction' }} />
       <Stack.Screen name="person/[id]" options={{ headerShown: true, title: 'Person' }} />
       <Stack.Screen name="debt/[id]" options={{ headerShown: true, title: 'Debt' }} />
+      <Stack.Screen name="recurring" options={{ headerShown: true, title: 'Recurring' }} />
       <Stack.Screen
         name="modals/transaction-form"
         options={{ presentation: 'modal', headerShown: true, title: 'New transaction' }}
@@ -61,6 +63,10 @@ function RootNavigator() {
         options={{ presentation: 'modal', headerShown: true, title: 'Transfer' }}
       />
       <Stack.Screen name="modals/receipt" options={{ presentation: 'modal', headerShown: true, title: 'Receipt' }} />
+      <Stack.Screen
+        name="modals/recurring-form"
+        options={{ presentation: 'modal', headerShown: true, title: 'New recurring' }}
+      />
       <Stack.Screen
         name="modals/change-pin"
         options={{ presentation: 'modal', headerShown: true, title: 'Change PIN' }}
@@ -93,6 +99,7 @@ export default function RootLayout() {
           <ConfirmProvider>
             <RootNavigator />
             <SmsImporter />
+            <RecurringRunner />
             <NotificationRouter />
             <LockOverlay />
             <StatusBar style="auto" />

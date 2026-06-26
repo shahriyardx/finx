@@ -7,19 +7,35 @@ export type Category = { key: string; label: string; icon: WalletIconName }
 
 export const EXPENSE_CATEGORIES: Category[] = [
   { key: 'food', label: 'Food', icon: 'silverware-fork-knife' },
+  { key: 'groceries', label: 'Groceries', icon: 'cart' },
   { key: 'transport', label: 'Transport', icon: 'car' },
   { key: 'gas', label: 'Gas', icon: 'gas-station' },
   { key: 'shopping', label: 'Shopping', icon: 'shopping' },
+  { key: 'clothing', label: 'Clothing', icon: 'tshirt-crew' },
   { key: 'bills', label: 'Bills', icon: 'file-document' },
+  { key: 'rent', label: 'Rent', icon: 'home-city' },
+  { key: 'utilities', label: 'Utilities', icon: 'flash' },
+  { key: 'phone', label: 'Phone / Internet', icon: 'cellphone' },
+  { key: 'subscriptions', label: 'Subscriptions', icon: 'autorenew' },
   { key: 'health', label: 'Health', icon: 'heart-pulse' },
+  { key: 'education', label: 'Education', icon: 'school' },
+  { key: 'travel', label: 'Travel', icon: 'airplane' },
   { key: 'fun', label: 'Fun', icon: 'gamepad-variant' },
+  { key: 'family', label: 'Family', icon: 'account-group' },
   { key: 'other', label: 'Other', icon: 'dots-horizontal-circle' },
 ]
 
 export const INCOME_CATEGORIES: Category[] = [
   { key: 'salary', label: 'Salary', icon: 'cash' },
-  { key: 'gift', label: 'Gift', icon: 'gift' },
   { key: 'business', label: 'Business', icon: 'briefcase' },
+  { key: 'freelance', label: 'Freelance', icon: 'laptop' },
+  { key: 'bonus', label: 'Bonus', icon: 'cash-plus' },
+  { key: 'investment', label: 'Investment', icon: 'chart-line' },
+  { key: 'interest', label: 'Interest', icon: 'bank' },
+  { key: 'rental', label: 'Rental', icon: 'home-city' },
+  { key: 'refund', label: 'Refund', icon: 'cash-refund' },
+  { key: 'gift', label: 'Gift', icon: 'gift' },
+  { key: 'pension', label: 'Pension', icon: 'account-cash' },
   { key: 'other', label: 'Other', icon: 'dots-horizontal-circle' },
 ]
 

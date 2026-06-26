@@ -220,6 +220,19 @@ export default function SettingsScreen() {
           ) : null}
 
           <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+            Scheduling
+          </ThemedText>
+          <ThemedView type="backgroundElement" style={styles.card}>
+            <Pressable style={styles.rowBetween} onPress={() => router.push('/recurring')}>
+              <View style={styles.dataRow}>
+                <MaterialCommunityIcons name="calendar-sync" size={20} color={theme.text} />
+                <ThemedText type="default">Recurring transactions</ThemedText>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={theme.textSecondary} />
+            </Pressable>
+          </ThemedView>
+
+          <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
             Data
           </ThemedText>
           <ThemedView type="backgroundElement" style={styles.card}>

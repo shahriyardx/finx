@@ -32,6 +32,33 @@ export const transactions = sqliteTable('transactions', {
   createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
 })
 
+/**
+ * A rule that auto-posts a transaction on a schedule. `nextRun` is the next due
+ * epoch-ms; the runner posts every elapsed occurrence (catch-up) and advances it.
+ * `endDate` (optional) stops the rule; `active` is toggled off when it ends.
+ */
+export const recurring = sqliteTable('recurring', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  walletId: integer('wallet_id')
+    .notNull()
+    .references(() => wallets.id, { onDelete: 'cascade' }),
+  type: text('type', { enum: ['income', 'expense'] }).notNull(),
+  amount: integer('amount').notNull(),
+  category: text('category').notNull().default('other'),
+  note: text('note'),
+  frequency: text('frequency', { enum: ['daily', 'weekly', 'monthly', 'yearly'] }).notNull(),
+  interval: integer('interval').notNull().default(1), // every N units of frequency
+  // Anchor: which day the schedule lands on (only the field for `frequency` is used).
+  weekday: integer('weekday'), // 0=Sun … 6=Sat (weekly)
+  dayOfMonth: integer('day_of_month'), // 1…31 (monthly + yearly)
+  month: integer('month'), // 0=Jan … 11=Dec (yearly)
+  nextRun: integer('next_run').notNull(),
+  endDate: integer('end_date'), // optional last day the rule may post
+  lastPostedAt: integer('last_posted_at'),
+  active: integer('active').notNull().default(1),
+  createdAt: integer('created_at').notNull().default(sql`(unixepoch() * 1000)`),
+})
+
 /** Money moved between two wallets. Kept out of the income/expense ledger. */
 export const transfers = sqliteTable('transfers', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -103,3 +130,5 @@ export type NewDebt = typeof debts.$inferInsert
 export type DebtPayment = typeof debtPayments.$inferSelect
 export type Transfer = typeof transfers.$inferSelect
 export type NewTransfer = typeof transfers.$inferInsert
+export type Recurring = typeof recurring.$inferSelect
+export type NewRecurring = typeof recurring.$inferInsert
