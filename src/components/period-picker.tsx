@@ -44,6 +44,7 @@ export function PeriodPicker({ visible, gran, anchor, now, onClose, onSelect }: 
                 ]}>
                 <ThemedText
                   type="small"
+                  numberOfLines={1}
                   style={{ color: gran === g.key ? theme.onAccent : theme.text, fontWeight: '600' }}>
                   {g.label}
                 </ThemedText>
